@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,22 +13,29 @@ import {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-violet-50/50 via-white to-fuchsia-50/30 px-4">
+      {/* Logo */}
+      <Link href="/" className="mb-8">
+        <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-2xl font-bold text-transparent">
+          ThinkNPost
+        </span>
+      </Link>
+
+      <Card className="w-full max-w-md border-violet-100 shadow-lg shadow-violet-100/50">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            Welcome to ThinkNPost
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            Welcome back
           </CardTitle>
-          <CardDescription>
-            Sign in to start generating AI-powered social media content
+          <CardDescription className="text-gray-500">
+            Sign in to start generating AI-powered content
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
-            className="w-full cursor-pointer"
+            className="w-full cursor-pointer border-violet-200 hover:bg-violet-50"
             variant="outline"
             size="lg"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("google", { callbackUrl: "/generate" })}
           >
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -49,6 +57,9 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </Button>
+          <p className="mt-4 text-center text-xs text-gray-400">
+            Free plan includes 5 posts per day
+          </p>
         </CardContent>
       </Card>
     </div>

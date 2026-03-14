@@ -20,6 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
+import { Sparkles, Copy, RefreshCw } from "lucide-react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
 const PLATFORMS = [
@@ -76,29 +77,36 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Generate Post</h1>
+    <div className="mx-auto max-w-2xl px-6 py-10">
+      <h1 className="mb-2 text-3xl font-bold text-gray-900">Generate Post</h1>
+      <p className="mb-8 text-gray-400">
+        Choose a platform, pick a tone, and let AI do the rest.
+      </p>
 
       {/* The Form */}
-      <Card className="mb-6">
+      <Card className="mb-6 border-violet-100">
         <CardHeader>
-          <CardTitle>Create Content</CardTitle>
+          <CardTitle className="text-gray-900">Create Content</CardTitle>
           <CardDescription>
-            Choose a platform, tone, and describe what you want to post about.
+            Describe your topic and we&apos;ll generate a ready-to-post caption.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            {/* Platform selector */}
             <div className="space-y-2">
-              <Label htmlFor="platform">Platform</Label>
+              <Label htmlFor="platform" className="text-gray-600">
+                Platform
+              </Label>
               <Select
                 value={platform}
                 onValueChange={(v) =>
                   setPlatform(v as GenerateRequest["platform"])
                 }
               >
-                <SelectTrigger id="platform" className="cursor-pointer">
+                <SelectTrigger
+                  id="platform"
+                  className="cursor-pointer border-violet-200 focus:ring-violet-300"
+                >
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,16 +123,20 @@ export default function GeneratePage() {
               </Select>
             </div>
 
-            {/* Tone selector */}
             <div className="space-y-2">
-              <Label htmlFor="tone">Tone</Label>
+              <Label htmlFor="tone" className="text-gray-600">
+                Tone
+              </Label>
               <Select
                 value={tone}
                 onValueChange={(v) =>
                   setTone(v as GenerateRequest["tone"])
                 }
               >
-                <SelectTrigger id="tone" className="cursor-pointer">
+                <SelectTrigger
+                  id="tone"
+                  className="cursor-pointer border-violet-200 focus:ring-violet-300"
+                >
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,30 +154,33 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* Prompt textarea */}
           <div className="space-y-2">
-            <Label htmlFor="prompt">What do you want to post about?</Label>
+            <Label htmlFor="prompt" className="text-gray-600">
+              What do you want to post about?
+            </Label>
             <Textarea
               id="prompt"
               placeholder="e.g., AI trends in 2026, remote work tips, morning routine..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
+              className="border-violet-200 focus:ring-violet-300"
             />
           </div>
 
-          {/* Error message */}
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
+            <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">
+              {error}
+            </div>
           )}
 
-          {/* Generate button */}
           <Button
-            className="w-full cursor-pointer"
+            className="w-full cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-md shadow-violet-200 transition-all hover:shadow-lg hover:shadow-violet-300"
             size="lg"
             onClick={handleGenerate}
             disabled={loading}
           >
+            <Sparkles className="h-4 w-4" />
             {loading ? "Generating..." : "Generate Post"}
           </Button>
         </CardContent>
@@ -173,37 +188,46 @@ export default function GeneratePage() {
 
       {/* The Result */}
       {result && (
-        <Card>
+        <Card className="border-violet-100 shadow-md shadow-violet-100/50">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle>Generated Post</CardTitle>
-              <Badge variant="outline">{result.platform}</Badge>
-              <Badge variant="secondary">{result.tone}</Badge>
+              <CardTitle className="text-gray-900">Generated Post</CardTitle>
+              <Badge
+                variant="outline"
+                className="border-violet-200 text-violet-600"
+              >
+                {result.platform}
+              </Badge>
+              <Badge className="bg-violet-50 text-violet-600">
+                {result.tone}
+              </Badge>
               <span className="ml-auto">
                 <FavoriteButton postId={result.id} initialFavorite={false} />
               </span>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm">
+            <div className="whitespace-pre-wrap rounded-xl bg-gradient-to-br from-violet-50/50 to-fuchsia-50/30 p-5 text-sm leading-relaxed text-gray-700">
               {result.content}
             </div>
             <div className="mt-4 flex gap-2">
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
                 onClick={() => navigator.clipboard.writeText(result.content)}
               >
-                Copy to Clipboard
+                <Copy className="h-3.5 w-3.5" />
+                Copy
               </Button>
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
                 onClick={() => {
                   setResult(null);
                   setPrompt("");
                 }}
               >
+                <RefreshCw className="h-3.5 w-3.5" />
                 Generate Another
               </Button>
             </div>
