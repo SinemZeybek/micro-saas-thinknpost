@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { FavoriteButton } from "@/components/shared/favorite-button";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
 const PLATFORMS = [
@@ -178,6 +179,9 @@ export default function GeneratePage() {
               <CardTitle>Generated Post</CardTitle>
               <Badge variant="outline">{result.platform}</Badge>
               <Badge variant="secondary">{result.tone}</Badge>
+              <span className="ml-auto">
+                <FavoriteButton postId={result.id} initialFavorite={false} />
+              </span>
             </div>
           </CardHeader>
           <CardContent>

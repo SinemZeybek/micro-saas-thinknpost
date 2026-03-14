@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { FavoriteButton } from "@/components/shared/favorite-button";
 
 const DAILY_LIMITS = { FREE: 3, PRO: 50 } as const;
 
@@ -109,8 +110,14 @@ export default async function DashboardPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{post.platform}</Badge>
                   <Badge variant="secondary">{post.tone}</Badge>
-                  <span className="ml-auto text-sm text-gray-400">
-                    {new Date(post.createdAt).toLocaleDateString()}
+                  <span className="ml-auto flex items-center gap-2">
+                    <span className="text-sm text-gray-400">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                    <FavoriteButton
+                      postId={post.id}
+                      initialFavorite={post.isFavorite}
+                    />
                   </span>
                 </div>
               </CardHeader>
