@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
-import { Sparkles, Copy, RefreshCw } from "lucide-react";
+import { Sparkles, Copy, Check, RefreshCw } from "lucide-react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
 const PLATFORMS = [
@@ -51,6 +51,7 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   async function handleGenerate() {
     if (!platform || !tone || !length || !prompt.trim()) {
@@ -257,17 +258,25 @@ export default function GeneratePage() {
               <Button
                 variant="outline"
                 className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
-                onClick={() => navigator.clipboard.writeText(result.content)}
+                onClick={() => {
+                  navigator.clipboard.writeText(result.content);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
               >
-                <Copy className="h-3.5 w-3.5" />
-                Copy
+                {copied ? (
+                  <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+                ) : (
+                  <><Copy className="h-3.5 w-3.5" /> Copy</>
+                )}
               </Button>
               <Button
                 variant="outline"
                 className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
                 onClick={() => {
                   setResult(null);
-                  setPrompt("");
+                  setCopied(false);
+                  handleGenerate();
                 }}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
