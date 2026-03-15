@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
+import { CopyButton } from "@/components/shared/copy-button";
 import { Heart, Sparkles } from "lucide-react";
 
 export default async function FavoritesPage() {
@@ -70,6 +71,7 @@ export default async function FavoritesPage() {
                     <span className="text-xs text-gray-400">
                       {new Date(post.createdAt).toLocaleDateString()}
                     </span>
+                    <CopyButton text={post.content} />
                     <FavoriteButton
                       postId={post.id}
                       initialFavorite={post.isFavorite}
