@@ -12,24 +12,40 @@ import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
-import { Sparkles, FileText, Crown } from "lucide-react";
+import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
+const POSTS_PER_PAGE = 10;
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const session = await getSession();
+  const params = await searchParams;
+  const currentPage = Math.max(1, parseInt(params.page || "1", 10));
 
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
-    include: {
-      posts: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      },
-    },
   });
 
   if (!user) return null;
+
+  // Get total post count for pagination
+  const totalPosts = await prisma.post.count({
+    where: { userId: user.id },
+  });
+
+  // Get posts for current page
+  const posts = await prisma.post.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * POSTS_PER_PAGE,
+    take: POSTS_PER_PAGE,
+  });
+
+  const totalPages = Math.max(1, Math.ceil(totalPosts / POSTS_PER_PAGE));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -86,7 +102,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-teal-700">
-              {user.posts.length}
+              {totalPosts}
             </p>
           </CardContent>
         </Card>
@@ -116,10 +132,17 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent Posts */}
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">
-        Recent Posts
-      </h2>
-      {user.posts.length === 0 ? (
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Recent Posts
+        </h2>
+        {totalPages > 1 && (
+          <span className="text-sm text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+        )}
+      </div>
+      {posts.length === 0 && currentPage === 1 ? (
         <Card className="border-dashed border-violet-200">
           <CardContent className="py-12 text-center text-gray-400">
             No posts yet. Click &quot;Generate Post&quot; to create your first
@@ -127,46 +150,103 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {user.posts.map((post) => (
-            <Card
-              key={post.id}
-              className="border-violet-100/60 transition-colors hover:border-violet-200"
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="border-violet-200 text-violet-600"
-                  >
-                    {post.platform}
-                  </Badge>
-                  <Badge className="bg-violet-50 text-violet-600 hover:bg-violet-100">
-                    {post.tone}
-                  </Badge>
-                  <span className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-gray-400">
-                      {new Date(post.createdAt).toLocaleDateString()}
+        <>
+          <div className="space-y-3">
+            {posts.map((post) => (
+              <Card
+                key={post.id}
+                className="border-violet-100/60 transition-colors hover:border-violet-200"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="border-violet-200 text-violet-600"
+                    >
+                      {post.platform}
+                    </Badge>
+                    <Badge className="bg-violet-50 text-violet-600 hover:bg-violet-100">
+                      {post.tone}
+                    </Badge>
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-gray-400">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </span>
+                      <CopyButton text={post.content} />
+                      <FavoriteButton
+                        postId={post.id}
+                        initialFavorite={post.isFavorite}
+                      />
                     </span>
-                    <CopyButton text={post.content} />
-                    <FavoriteButton
-                      postId={post.id}
-                      initialFavorite={post.isFavorite}
-                    />
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-2 text-xs text-gray-400">
-                  Prompt: {post.prompt}
-                </p>
-                <div className="whitespace-pre-wrap rounded-xl bg-violet-50/50 p-4 text-sm leading-relaxed text-gray-700">
-                  {post.content}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-2 text-xs text-gray-400">
+                    Prompt: {post.prompt}
+                  </p>
+                  <div className="whitespace-pre-wrap rounded-xl bg-violet-50/50 p-4 text-sm leading-relaxed text-gray-700">
+                    {post.content}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {currentPage > 1 ? (
+                <Link href={`/dashboard?page=${currentPage - 1}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer gap-1 border-violet-200 hover:bg-violet-50"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 border-violet-100 text-gray-300"
+                  disabled
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+              )}
+
+              <span className="px-3 text-sm text-gray-500">
+                {currentPage} / {totalPages}
+              </span>
+
+              {currentPage < totalPages ? (
+                <Link href={`/dashboard?page=${currentPage + 1}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer gap-1 border-violet-200 hover:bg-violet-50"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 border-violet-100 text-gray-300"
+                  disabled
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
