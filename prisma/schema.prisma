@@ -54,14 +54,15 @@ model VerificationToken {
 // ──────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  image         String?
-  emailVerified DateTime?
-  plan          Plan      @default(FREE)
-  dailyUsage    Int       @default(0)
-  lastUsageDate DateTime  @default(now())
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  image           String?
+  emailVerified   DateTime?
+  plan            Plan      @default(FREE)
+  dailyUsage      Int       @default(0)
+  lastUsageDate   DateTime  @default(now())
+  polarCustomerId String?   @unique  // Links to Polar.sh customer
 
   posts    Post[]
   accounts Account[]

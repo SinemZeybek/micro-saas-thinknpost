@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
+import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { Sparkles, FileText, Crown } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
@@ -96,16 +97,19 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Badge
-              className={
-                user.plan === "PRO"
-                  ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
-                  : "border-violet-200 bg-violet-50 text-violet-600"
-              }
-              variant="outline"
-            >
-              {user.plan}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge
+                className={
+                  user.plan === "PRO"
+                    ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
+                    : "border-violet-200 bg-violet-50 text-violet-600"
+                }
+                variant="outline"
+              >
+                {user.plan}
+              </Badge>
+              {user.plan === "FREE" && <UpgradeButton />}
+            </div>
           </CardContent>
         </Card>
       </div>

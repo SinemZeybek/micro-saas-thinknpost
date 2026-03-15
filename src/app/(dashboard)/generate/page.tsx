@@ -20,6 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
+import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { Sparkles, Copy, RefreshCw } from "lucide-react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
@@ -170,7 +171,12 @@ export default function GeneratePage() {
 
           {error && (
             <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">
-              {error}
+              <p>{error}</p>
+              {error.includes("Daily limit") && (
+                <div className="mt-3">
+                  <UpgradeButton />
+                </div>
+              )}
             </div>
           )}
 
