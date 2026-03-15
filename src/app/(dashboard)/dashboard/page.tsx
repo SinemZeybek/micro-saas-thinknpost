@@ -13,6 +13,7 @@ import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
+import { PlatformMockup } from "@/components/shared/platform-mockups";
 import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
@@ -186,9 +187,12 @@ export default async function DashboardPage({
                   <p className="mb-2 text-xs text-gray-400">
                     Prompt: {post.prompt}
                   </p>
-                  <div className="whitespace-pre-wrap rounded-xl bg-violet-50/50 p-4 text-sm leading-relaxed text-gray-700">
-                    {post.content}
-                  </div>
+                  <PlatformMockup
+                    platform={post.platform}
+                    content={post.content}
+                    userName={user.name || "You"}
+                    userImage={user.image || undefined}
+                  />
                 </CardContent>
               </Card>
             ))}

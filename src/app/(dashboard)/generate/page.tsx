@@ -21,7 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
+import { PlatformMockup } from "@/components/shared/platform-mockups";
 import { Sparkles, Copy, Check, RefreshCw } from "lucide-react";
+import { useSession } from "next-auth/react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
 const PLATFORMS = [
@@ -52,6 +54,7 @@ export default function GeneratePage() {
   const [results, setResults] = useState<GenerateResponse[]>([]);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   async function handleGenerate() {
     if (!platform || !tone || !length || !prompt.trim()) {
@@ -265,9 +268,12 @@ export default function GeneratePage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="whitespace-pre-wrap rounded-xl bg-gradient-to-br from-violet-50/50 to-fuchsia-50/30 p-5 text-sm leading-relaxed text-gray-700">
-                  {result.content}
-                </div>
+                <PlatformMockup
+                  platform={result.platform}
+                  content={result.content}
+                  userName={session?.user?.name || "You"}
+                  userImage={session?.user?.image || undefined}
+                />
                 <div className="mt-4 flex gap-2">
                   <Button
                     variant="outline"

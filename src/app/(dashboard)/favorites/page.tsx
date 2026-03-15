@@ -11,10 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { PlatformMockup } from "@/components/shared/platform-mockups";
 import { Heart, Sparkles } from "lucide-react";
 
 export default async function FavoritesPage() {
   const session = await getSession();
+
+  const user = await prisma.user.findUnique({
+    where: { id: session!.user.id },
+  });
 
   const favorites = await prisma.post.findMany({
     where: {
@@ -85,9 +90,12 @@ export default async function FavoritesPage() {
                 <p className="mb-2 text-xs text-gray-400">
                   Prompt: {post.prompt}
                 </p>
-                <div className="whitespace-pre-wrap rounded-xl bg-violet-50/50 p-4 text-sm leading-relaxed text-gray-700">
-                  {post.content}
-                </div>
+                <PlatformMockup
+                  platform={post.platform}
+                  content={post.content}
+                  userName={user?.name || "You"}
+                  userImage={user?.image || undefined}
+                />
               </CardContent>
             </Card>
           ))}
