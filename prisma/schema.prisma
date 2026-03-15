@@ -79,6 +79,7 @@ model Post {
   tone        Tone
   prompt      String
   content     String      @db.Text
+  length      Length      @default(SHORT)
   imageUrl    String?
   orientation Orientation @default(SQUARE)
   isFavorite  Boolean     @default(false)
@@ -99,6 +100,12 @@ enum Platform {
   TWITTER
   LINKEDIN
   INSTAGRAM
+  TIKTOK
+}
+
+enum Length {
+  SHORT
+  LONG
 }
 
 enum Tone {

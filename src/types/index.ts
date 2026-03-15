@@ -1,8 +1,9 @@
 // What the frontend sends to the API
 export interface GenerateRequest {
-  platform: "TWITTER" | "LINKEDIN" | "INSTAGRAM";
+  platform: "TWITTER" | "LINKEDIN" | "INSTAGRAM" | "TIKTOK";
   tone: "PROFESSIONAL" | "CASUAL" | "HUMOROUS" | "INSPIRATIONAL";
   prompt: string;
+  length: "SHORT" | "LONG";
 }
 
 // What the API sends back to the frontend

@@ -16,12 +16,12 @@ export async function POST(req: NextRequest) {
 
   // 2. Parse the request body
   const body: GenerateRequest = await req.json();
-  const { platform, tone, prompt } = body;
+  const { platform, tone, prompt, length } = body;
 
   // 3. Basic validation
-  if (!platform || !tone || !prompt) {
+  if (!platform || !tone || !prompt || !length) {
     return NextResponse.json(
-      { error: "Platform, tone, and prompt are required" },
+      { error: "Platform, tone, prompt, and length are required" },
       { status: 400 }
     );
   }
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 5. Call Gemini to generate the post
-    const content = await generatePost({ platform, tone, prompt });
+    const content = await generatePost({ platform, tone, prompt, length });
 
     // 6. Save the post to the database and update usage
     const [post] = await prisma.$transaction([
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
           tone,
           prompt,
           content,
+          length,
         },
       }),
       prisma.user.update({

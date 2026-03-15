@@ -28,6 +28,7 @@ const PLATFORMS = [
   { value: "TWITTER", label: "Twitter / X" },
   { value: "LINKEDIN", label: "LinkedIn" },
   { value: "INSTAGRAM", label: "Instagram" },
+  { value: "TIKTOK", label: "TikTok" },
 ] as const;
 
 const TONES = [
@@ -37,16 +38,22 @@ const TONES = [
   { value: "INSPIRATIONAL", label: "Inspirational" },
 ] as const;
 
+const LENGTHS = [
+  { value: "SHORT", label: "Short" },
+  { value: "LONG", label: "Long" },
+] as const;
+
 export default function GeneratePage() {
   const [platform, setPlatform] = useState<GenerateRequest["platform"] | "">("");
   const [tone, setTone] = useState<GenerateRequest["tone"] | "">("");
+  const [length, setLength] = useState<GenerateRequest["length"] | "">("");
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState("");
 
   async function handleGenerate() {
-    if (!platform || !tone || !prompt.trim()) {
+    if (!platform || !tone || !length || !prompt.trim()) {
       setError("Please fill in all fields");
       return;
     }
@@ -59,7 +66,7 @@ export default function GeneratePage() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, tone, prompt: prompt.trim() }),
+        body: JSON.stringify({ platform, tone, prompt: prompt.trim(), length }),
       });
 
       const data = await res.json();
@@ -93,7 +100,7 @@ export default function GeneratePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="platform" className="text-gray-600">
                 Platform
@@ -148,6 +155,36 @@ export default function GeneratePage() {
                       className="cursor-pointer"
                     >
                       {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="length" className="text-gray-600">
+                Length
+              </Label>
+              <Select
+                value={length}
+                onValueChange={(v) =>
+                  setLength(v as GenerateRequest["length"])
+                }
+              >
+                <SelectTrigger
+                  id="length"
+                  className="cursor-pointer border-violet-200 focus:ring-violet-300"
+                >
+                  <SelectValue placeholder="Select length" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LENGTHS.map((l) => (
+                    <SelectItem
+                      key={l.value}
+                      value={l.value}
+                      className="cursor-pointer"
+                    >
+                      {l.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

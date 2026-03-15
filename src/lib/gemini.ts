@@ -14,6 +14,8 @@ const PLATFORM_GUIDELINES: Record<string, string> = {
     "Professional tone. Can be longer (up to 3000 chars). Use line breaks for readability. Add a call-to-action at the end.",
   INSTAGRAM:
     "Engaging and visual. Use emojis. Include 5-10 relevant hashtags at the end. Write a caption that tells a story.",
+  TIKTOK:
+    "Trendy, engaging, and hook-driven. Start with a strong hook in the first line to grab attention. Use casual language, emojis, and trending phrases. Include 3-5 relevant hashtags at the end.",
 };
 
 const TONE_GUIDELINES: Record<string, string> = {
@@ -24,16 +26,24 @@ const TONE_GUIDELINES: Record<string, string> = {
     "Motivational, uplifting, use powerful language. Include a takeaway message.",
 };
 
+// Length guidelines — SHORT is snappy and quick, LONG is detailed
+const LENGTH_GUIDELINES: Record<string, string> = {
+  SHORT: "Keep it brief and punchy. Get to the point quickly. Ideal for quick scrolling.",
+  LONG: "Go in-depth. Add more detail, context, and storytelling. Use multiple paragraphs or line breaks for readability.",
+};
+
 interface GeneratePostParams {
   platform: string;
   tone: string;
   prompt: string;
+  length: string;
 }
 
 export async function generatePost({
   platform,
   tone,
   prompt,
+  length,
 }: GeneratePostParams): Promise<string> {
   const systemPrompt = `You are a social media content expert. Generate a single post based on the user's topic.
 
@@ -42,6 +52,9 @@ ${PLATFORM_GUIDELINES[platform]}
 
 Tone: ${tone}
 ${TONE_GUIDELINES[tone]}
+
+Length: ${length}
+${LENGTH_GUIDELINES[length]}
 
 Rules:
 - Output ONLY the post text, nothing else
