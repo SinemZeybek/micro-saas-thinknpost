@@ -13,6 +13,10 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log("Sign in attempt:", { userId: user.id, provider: account?.provider });
+      return true;
+    },
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
@@ -25,6 +29,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);
