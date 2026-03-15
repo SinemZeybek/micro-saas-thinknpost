@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
+import { DeleteButton } from "@/components/shared/delete-button";
 import { Heart, Sparkles } from "lucide-react";
 
 export default async function FavoritesPage() {
@@ -76,6 +77,7 @@ export default async function FavoritesPage() {
                       postId={post.id}
                       initialFavorite={post.isFavorite}
                     />
+                    <DeleteButton postId={post.id} />
                   </span>
                 </div>
               </CardHeader>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
+import { DeleteButton } from "@/components/shared/delete-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -177,6 +178,7 @@ export default async function DashboardPage({
                         postId={post.id}
                         initialFavorite={post.isFavorite}
                       />
+                      <DeleteButton postId={post.id} />
                     </span>
                   </div>
                 </CardHeader>

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, Sparkles, Heart, LogOut } from "lucide-react";
+import { LayoutDashboard, Sparkles, Heart, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/generate", label: "Generate", icon: Sparkles },
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Navbar() {
