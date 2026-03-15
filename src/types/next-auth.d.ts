@@ -1,4 +1,4 @@
-import type { Plan } from "@/generated/prisma/client";
+import type { Plan } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
