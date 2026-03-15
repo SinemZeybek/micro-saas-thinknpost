@@ -49,9 +49,9 @@ export default function GeneratePage() {
   const [length, setLength] = useState<GenerateRequest["length"] | "">("");
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<GenerateResponse | null>(null);
+  const [results, setResults] = useState<GenerateResponse[]>([]);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (!platform || !tone || !length || !prompt.trim()) {
@@ -61,7 +61,6 @@ export default function GeneratePage() {
 
     setLoading(true);
     setError("");
-    setResult(null);
 
     try {
       const res = await fetch("/api/generate", {
@@ -77,7 +76,7 @@ export default function GeneratePage() {
         return;
       }
 
-      setResult(data);
+      setResults((prev) => [data, ...prev]);
     } catch {
       setError("Failed to generate post. Please try again.");
     } finally {
@@ -230,61 +229,66 @@ export default function GeneratePage() {
         </CardContent>
       </Card>
 
-      {/* The Result */}
-      {result && (
-        <Card className="border-violet-100 shadow-md shadow-violet-100/50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-gray-900">Generated Post</CardTitle>
-              <Badge
-                variant="outline"
-                className="border-violet-200 text-violet-600"
-              >
-                {result.platform}
-              </Badge>
-              <Badge className="bg-violet-50 text-violet-600">
-                {result.tone}
-              </Badge>
-              <span className="ml-auto">
-                <FavoriteButton postId={result.id} initialFavorite={false} />
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap rounded-xl bg-gradient-to-br from-violet-50/50 to-fuchsia-50/30 p-5 text-sm leading-relaxed text-gray-700">
-              {result.content}
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button
-                variant="outline"
-                className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
-                onClick={() => {
-                  navigator.clipboard.writeText(result.content);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied ? (
-                  <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
-                ) : (
-                  <><Copy className="h-3.5 w-3.5" /> Copy</>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
-                onClick={() => {
-                  setResult(null);
-                  setCopied(false);
-                  handleGenerate();
-                }}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Generate Another
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Generated Results */}
+      {results.length > 0 && (
+        <div className="space-y-4">
+          {/* Generate Another button at the top */}
+          <Button
+            variant="outline"
+            className="w-full cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+            onClick={handleGenerate}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Generating..." : "Generate Another"}
+          </Button>
+
+          {results.map((result, index) => (
+            <Card key={result.id} className={`border-violet-100 shadow-md shadow-violet-100/50 ${index === 0 ? "ring-2 ring-violet-200" : ""}`}>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-gray-900 text-base">
+                    {index === 0 ? "Latest" : `#${results.length - index}`}
+                  </CardTitle>
+                  <Badge
+                    variant="outline"
+                    className="border-violet-200 text-violet-600"
+                  >
+                    {result.platform}
+                  </Badge>
+                  <Badge className="bg-violet-50 text-violet-600">
+                    {result.tone}
+                  </Badge>
+                  <span className="ml-auto">
+                    <FavoriteButton postId={result.id} initialFavorite={false} />
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap rounded-xl bg-gradient-to-br from-violet-50/50 to-fuchsia-50/30 p-5 text-sm leading-relaxed text-gray-700">
+                  {result.content}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+                    onClick={() => {
+                      navigator.clipboard.writeText(result.content);
+                      setCopiedId(result.id);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                  >
+                    {copiedId === result.id ? (
+                      <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+                    ) : (
+                      <><Copy className="h-3.5 w-3.5" /> Copy</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
