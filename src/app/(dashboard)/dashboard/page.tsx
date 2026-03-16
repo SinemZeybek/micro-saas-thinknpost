@@ -187,6 +187,24 @@ export default async function DashboardPage({
                   <p className="mb-2 text-xs text-gray-400">
                     Prompt: {post.prompt}
                   </p>
+                  {post.imageUrl && (
+                    <div className="mb-3 overflow-hidden rounded-xl border border-violet-100">
+                      <img
+                        src={post.imageUrl}
+                        alt="AI generated visual"
+                        className="w-full object-cover"
+                        style={{
+                          aspectRatio:
+                            post.orientation === "PORTRAIT"
+                              ? "9/16"
+                              : post.orientation === "LANDSCAPE"
+                                ? "16/9"
+                                : "1/1",
+                          maxHeight: post.orientation === "PORTRAIT" ? "300px" : undefined,
+                        }}
+                      />
+                    </div>
+                  )}
                   <PlatformMockup
                     platform={post.platform}
                     content={post.content}

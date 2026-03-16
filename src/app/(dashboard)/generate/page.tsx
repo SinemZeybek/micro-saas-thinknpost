@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,10 +19,19 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { PlatformMockup } from "@/components/shared/platform-mockups";
-import { Sparkles, Copy, Check, RefreshCw } from "lucide-react";
+import {
+  Sparkles,
+  Copy,
+  Check,
+  RefreshCw,
+  ImageIcon,
+  Download,
+  Lock,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
@@ -45,16 +54,43 @@ const LENGTHS = [
   { value: "LONG", label: "Long" },
 ] as const;
 
+const ORIENTATIONS = [
+  { value: "PORTRAIT", label: "Portrait (9:16)" },
+  { value: "LANDSCAPE", label: "Landscape (16:9)" },
+  { value: "SQUARE", label: "Square (1:1)" },
+] as const;
+
+// Default orientations per platform
+const PLATFORM_DEFAULTS: Record<string, string> = {
+  INSTAGRAM: "SQUARE",
+  LINKEDIN: "LANDSCAPE",
+  TWITTER: "LANDSCAPE",
+  TIKTOK: "PORTRAIT",
+};
+
 export default function GeneratePage() {
-  const [platform, setPlatform] = useState<GenerateRequest["platform"] | "">("");
+  const [platform, setPlatform] = useState<GenerateRequest["platform"] | "">(
+    ""
+  );
   const [tone, setTone] = useState<GenerateRequest["tone"] | "">("");
   const [length, setLength] = useState<GenerateRequest["length"] | "">("");
   const [prompt, setPrompt] = useState("");
+  const [generateImage, setGenerateImage] = useState(false);
+  const [orientation, setOrientation] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<GenerateResponse[]>([]);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { data: session } = useSession();
+
+  const isPro = session?.user?.plan === "PRO";
+
+  // Auto-select orientation when platform changes
+  useEffect(() => {
+    if (platform && generateImage) {
+      setOrientation(PLATFORM_DEFAULTS[platform] || "SQUARE");
+    }
+  }, [platform, generateImage]);
 
   async function handleGenerate() {
     if (!platform || !tone || !length || !prompt.trim()) {
@@ -69,7 +105,14 @@ export default function GeneratePage() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, tone, prompt: prompt.trim(), length }),
+        body: JSON.stringify({
+          platform,
+          tone,
+          prompt: prompt.trim(),
+          length,
+          generateImage: generateImage && isPro,
+          orientation: generateImage && isPro ? orientation : undefined,
+        }),
       });
 
       const data = await res.json();
@@ -84,6 +127,23 @@ export default function GeneratePage() {
       setError("Failed to generate post. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDownload(imageUrl: string, postId: string) {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `thinknpost-${postId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      console.error("Download failed");
     }
   }
 
@@ -209,6 +269,65 @@ export default function GeneratePage() {
             />
           </div>
 
+          {/* Image Generation Toggle — PRO Only */}
+          <div className="rounded-lg border border-violet-100 bg-violet-50/30 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ImageIcon className="h-5 w-5 text-violet-500" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-900">
+                      Generate Image
+                    </span>
+                    {!isPro && (
+                      <Badge className="bg-violet-100 text-violet-700 text-xs">
+                        <Lock className="mr-1 h-3 w-3" />
+                        PRO
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    AI-generated visual to go with your post
+                  </p>
+                </div>
+              </div>
+              {isPro ? (
+                <Switch
+                  checked={generateImage}
+                  onCheckedChange={setGenerateImage}
+                  className="cursor-pointer"
+                />
+              ) : (
+                <UpgradeButton />
+              )}
+            </div>
+
+            {/* Orientation Selector — shown when image toggle is on */}
+            {generateImage && isPro && (
+              <div className="mt-4 space-y-2">
+                <Label className="text-gray-600 text-xs">
+                  Image Orientation
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ORIENTATIONS.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setOrientation(o.value)}
+                      className={`cursor-pointer rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
+                        orientation === o.value
+                          ? "border-violet-400 bg-violet-100 text-violet-700"
+                          : "border-violet-200 bg-white text-gray-600 hover:bg-violet-50"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {error && (
             <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">
               <p>{error}</p>
@@ -227,7 +346,11 @@ export default function GeneratePage() {
             disabled={loading}
           >
             <Sparkles className="h-4 w-4" />
-            {loading ? "Generating..." : "Generate Post"}
+            {loading
+              ? generateImage && isPro
+                ? "Generating post + image..."
+                : "Generating..."
+              : "Generate Post"}
           </Button>
         </CardContent>
       </Card>
@@ -242,15 +365,20 @@ export default function GeneratePage() {
             onClick={handleGenerate}
             disabled={loading}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+            />
             {loading ? "Generating..." : "Generate Another"}
           </Button>
 
           {results.map((result, index) => (
-            <Card key={result.id} className={`border-violet-100 shadow-md shadow-violet-100/50 ${index === 0 ? "ring-2 ring-violet-200" : ""}`}>
+            <Card
+              key={result.id}
+              className={`border-violet-100 shadow-md shadow-violet-100/50 ${index === 0 ? "ring-2 ring-violet-200" : ""}`}
+            >
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-gray-900 text-base">
+                  <CardTitle className="text-base text-gray-900">
                     {index === 0 ? "Latest" : `#${results.length - index}`}
                   </CardTitle>
                   <Badge
@@ -263,11 +391,37 @@ export default function GeneratePage() {
                     {result.tone}
                   </Badge>
                   <span className="ml-auto">
-                    <FavoriteButton postId={result.id} initialFavorite={false} />
+                    <FavoriteButton
+                      postId={result.id}
+                      initialFavorite={false}
+                    />
                   </span>
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Generated Image */}
+                {result.imageUrl && (
+                  <div className="mb-4 overflow-hidden rounded-xl border border-violet-100">
+                    <img
+                      src={result.imageUrl}
+                      alt="AI generated visual"
+                      className="w-full object-cover"
+                      style={{
+                        aspectRatio:
+                          result.orientation === "PORTRAIT"
+                            ? "9/16"
+                            : result.orientation === "LANDSCAPE"
+                              ? "16/9"
+                              : "1/1",
+                        maxHeight:
+                          result.orientation === "PORTRAIT"
+                            ? "400px"
+                            : undefined,
+                      }}
+                    />
+                  </div>
+                )}
+
                 <PlatformMockup
                   platform={result.platform}
                   content={result.content}
@@ -285,11 +439,27 @@ export default function GeneratePage() {
                     }}
                   >
                     {copiedId === result.id ? (
-                      <><Check className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+                      <>
+                        <Check className="h-3.5 w-3.5 text-green-500" />{" "}
+                        Copied!
+                      </>
                     ) : (
-                      <><Copy className="h-3.5 w-3.5" /> Copy</>
+                      <>
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </>
                     )}
                   </Button>
+                  {result.imageUrl && (
+                    <Button
+                      variant="outline"
+                      className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+                      onClick={() =>
+                        handleDownload(result.imageUrl!, result.id)
+                      }
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download Image
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,10 +1,19 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-// Create the Gemini client — uses your API key from .env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+/**
+ * Gemini Client for ThinkNPost
+ *
+ * We use two models:
+ * - gemini-2.5-flash → text generation (fast, cheap)
+ * - gemini-2.5-flash-preview-image-generation → image generation (PRO only)
+ *
+ * The @google/genai SDK is the new official SDK that supports
+ * both text and image generation.
+ */
 
-// We use Gemini 2.5 Flash — fast and cheap, perfect for text generation
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
+});
 
 // Platform-specific rules so the AI writes appropriate content
 const PLATFORM_GUIDELINES: Record<string, string> = {
@@ -19,18 +28,24 @@ const PLATFORM_GUIDELINES: Record<string, string> = {
 };
 
 const TONE_GUIDELINES: Record<string, string> = {
-  PROFESSIONAL: "Formal, authoritative, data-driven. Use industry terminology.",
-  CASUAL: "Friendly, conversational, relatable. Write like talking to a friend.",
-  HUMOROUS: "Witty, playful, use wordplay or pop culture references. Keep it light.",
+  PROFESSIONAL:
+    "Formal, authoritative, data-driven. Use industry terminology.",
+  CASUAL:
+    "Friendly, conversational, relatable. Write like talking to a friend.",
+  HUMOROUS:
+    "Witty, playful, use wordplay or pop culture references. Keep it light.",
   INSPIRATIONAL:
     "Motivational, uplifting, use powerful language. Include a takeaway message.",
 };
 
 // Length guidelines — SHORT is snappy and quick, LONG is detailed
 const LENGTH_GUIDELINES: Record<string, string> = {
-  SHORT: "Keep it brief and punchy. Get to the point quickly. Ideal for quick scrolling.",
+  SHORT:
+    "Keep it brief and punchy. Get to the point quickly. Ideal for quick scrolling.",
   LONG: "Go in-depth. Add more detail, context, and storytelling. Use multiple paragraphs or line breaks for readability.",
 };
+
+// ─── TEXT GENERATION ────────────────────────────────────────────
 
 interface GeneratePostParams {
   platform: string;
@@ -62,11 +77,81 @@ Rules:
 - No "Here's a post:" prefix
 - Make it feel authentic, not AI-generated`;
 
-  const result = await model.generateContent([
-    { text: systemPrompt },
-    { text: `Topic: ${prompt}` },
-  ]);
+  const result = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      { role: "user", parts: [{ text: systemPrompt + `\n\nTopic: ${prompt}` }] },
+    ],
+  });
 
-  const response = result.response;
-  return response.text().trim();
+  return (result.text ?? "").trim();
+}
+
+// ─── IMAGE GENERATION (PRO ONLY) ───────────────────────────────
+
+// Map our orientation enum to Gemini's aspect ratio format
+const ORIENTATION_TO_ASPECT: Record<string, string> = {
+  PORTRAIT: "9:16",
+  LANDSCAPE: "16:9",
+  SQUARE: "1:1",
+};
+
+// Default orientation based on platform conventions
+export const PLATFORM_DEFAULT_ORIENTATION: Record<string, string> = {
+  INSTAGRAM: "SQUARE",
+  LINKEDIN: "LANDSCAPE",
+  TWITTER: "LANDSCAPE",
+  TIKTOK: "PORTRAIT",
+};
+
+interface GenerateImageParams {
+  postContent: string;
+  platform: string;
+  orientation: string;
+}
+
+/**
+ * Generate an image for a social media post using Gemini's native image generation.
+ * Returns the base64 image data (without data URI prefix) and MIME type, or null if it fails.
+ */
+export async function generatePostImage({
+  postContent,
+  platform,
+  orientation,
+}: GenerateImageParams): Promise<{ data: string; mimeType: string } | null> {
+  const aspectRatio = ORIENTATION_TO_ASPECT[orientation] || "1:1";
+
+  const imagePrompt = `Create a professional, modern social media visual for ${platform}.
+The image should visually represent this topic: "${postContent.slice(0, 300)}"
+Style: Clean, eye-catching, vibrant colors, modern design.
+No text on the image. High quality, suitable for social media.
+Aspect ratio: ${aspectRatio}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-image-generation",
+      contents: [{ role: "user", parts: [{ text: imagePrompt }] }],
+      config: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
+    });
+
+    // Extract the image from the response parts
+    if (response.candidates && response.candidates[0]?.content?.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          return {
+            data: part.inlineData.data!,
+            mimeType: part.inlineData.mimeType || "image/png",
+          };
+        }
+      }
+    }
+
+    console.error("No image data found in Gemini response");
+    return null;
+  } catch (err) {
+    console.error("Image generation error:", err);
+    return null;
+  }
 }
