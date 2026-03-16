@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -58,7 +59,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${plusJakarta.variable} antialiased`}>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          {children}
+          <Toaster position="bottom-right" richColors />
+        </SessionProvider>
       </body>
     </html>
   );

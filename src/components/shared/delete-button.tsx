@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function DeleteButton({ postId }: { postId: string }) {
   const [confirming, setConfirming] = useState(false);
@@ -18,10 +19,13 @@ export function DeleteButton({ postId }: { postId: string }) {
       });
 
       if (res.ok) {
-        router.refresh(); // Re-fetch server data to update the page
+        toast.success("Post deleted");
+        router.refresh();
+      } else {
+        toast.error("Failed to delete post");
       }
     } catch {
-      // silently fail
+      toast.error("Failed to delete post");
     } finally {
       setDeleting(false);
       setConfirming(false);

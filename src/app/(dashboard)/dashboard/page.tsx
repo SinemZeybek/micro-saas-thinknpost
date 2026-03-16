@@ -12,8 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { EditButton } from "@/components/shared/edit-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { PlatformMockup } from "@/components/shared/platform-mockups";
+import { ExportCSVButton } from "@/components/shared/export-csv-button";
 import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight, Search, BarChart3, Heart } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
@@ -118,12 +120,15 @@ export default async function DashboardPage({
             Here&apos;s your content overview
           </p>
         </div>
-        <Link href="/generate">
-          <Button className="cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-md shadow-violet-200 transition-shadow hover:shadow-lg hover:shadow-violet-300">
-            <Sparkles className="h-4 w-4" />
-            Generate Post
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportCSVButton />
+          <Link href="/generate">
+            <Button className="cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-md shadow-violet-200 transition-shadow hover:shadow-lg hover:shadow-violet-300">
+              <Sparkles className="h-4 w-4" />
+              Generate Post
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -414,6 +419,7 @@ export default async function DashboardPage({
                         {new Date(post.createdAt).toLocaleDateString()}
                       </span>
                       <CopyButton text={post.content} />
+                      <EditButton postId={post.id} initialContent={post.content} />
                       <FavoriteButton
                         postId={post.id}
                         initialFavorite={post.isFavorite}

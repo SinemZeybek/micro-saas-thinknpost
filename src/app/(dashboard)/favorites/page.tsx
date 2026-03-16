@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { EditButton } from "@/components/shared/edit-button";
 import { PlatformMockup } from "@/components/shared/platform-mockups";
 import { Heart, Sparkles } from "lucide-react";
 
@@ -78,6 +79,7 @@ export default async function FavoritesPage() {
                       {new Date(post.createdAt).toLocaleDateString()}
                     </span>
                     <CopyButton text={post.content} />
+                    <EditButton postId={post.id} initialContent={post.content} />
                     <FavoriteButton
                       postId={post.id}
                       initialFavorite={post.isFavorite}

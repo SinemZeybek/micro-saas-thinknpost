@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +34,7 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import type { GenerateRequest, GenerateResponse } from "@/types";
 
 const PLATFORMS = [
@@ -85,6 +86,7 @@ export default function GeneratePage() {
   const [downloadedId, setDownloadedId] = useState<string | null>(null);
   const [abLoading, setAbLoading] = useState(false);
   const [abVariations, setAbVariations] = useState<GenerateResponse[]>([]);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const { data: session } = useSession();
 
   const isPro = session?.user?.plan === "PRO";
@@ -96,9 +98,10 @@ export default function GeneratePage() {
     }
   }, [platform, generateImage]);
 
-  async function handleGenerate() {
+  const handleGenerate = useCallback(async () => {
     if (!platform || !tone || !length || !prompt.trim()) {
       setError("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -123,16 +126,19 @@ export default function GeneratePage() {
 
       if (!res.ok) {
         setError(data.error || "Something went wrong");
+        toast.error(data.error || "Something went wrong");
         return;
       }
 
       setResults((prev) => [data, ...prev]);
+      toast.success("Post generated successfully!");
     } catch {
       setError("Failed to generate post. Please try again.");
+      toast.error("Failed to generate post. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [platform, tone, length, prompt, generateImage, isPro, orientation]);
 
   async function handleDownload(imageUrl: string, postId: string) {
     try {
@@ -147,15 +153,45 @@ export default function GeneratePage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
       setDownloadedId(postId);
+      toast.success("Image downloaded!");
       setTimeout(() => setDownloadedId(null), 2000);
     } catch {
-      console.error("Download failed");
+      toast.error("Download failed");
     }
   }
 
-  async function handleABGenerate() {
+  async function handleRegenerateImage(postId: string) {
+    setRegeneratingId(postId);
+    try {
+      const res = await fetch(`/api/posts/${postId}/regenerate-image`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Failed to regenerate image");
+        return;
+      }
+
+      // Update the result in state with the new image
+      setResults((prev) =>
+        prev.map((r) =>
+          r.id === postId ? { ...r, imageUrl: data.imageUrl } : r
+        )
+      );
+      toast.success("Image regenerated!");
+    } catch {
+      toast.error("Failed to regenerate image");
+    } finally {
+      setRegeneratingId(null);
+    }
+  }
+
+  const handleABGenerate = useCallback(async () => {
     if (!platform || !tone || !length || !prompt.trim()) {
       setError("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -179,16 +215,34 @@ export default function GeneratePage() {
 
       if (!res.ok) {
         setError(data.error || "Something went wrong");
+        toast.error(data.error || "Something went wrong");
         return;
       }
 
       setAbVariations(data.variations);
+      toast.success("A/B variations generated!");
     } catch {
       setError("Failed to generate A/B variations. Please try again.");
+      toast.error("Failed to generate A/B variations");
     } finally {
       setAbLoading(false);
     }
-  }
+  }, [platform, tone, length, prompt]);
+
+  // Keyboard shortcut: Cmd+Enter or Ctrl+Enter to generate
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!loading && !abLoading) {
+          handleGenerate();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleGenerate, loading, abLoading]);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
@@ -310,6 +364,9 @@ export default function GeneratePage() {
               rows={3}
               className="border-violet-200 focus:ring-violet-300"
             />
+            <p className="text-xs text-gray-400">
+              Press <kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Ctrl</kbd>+<kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Enter</kbd> to generate
+            </p>
           </div>
 
           {/* Image Generation Toggle — PRO Only */}
@@ -423,6 +480,32 @@ export default function GeneratePage() {
         </CardContent>
       </Card>
 
+      {/* Loading Skeleton */}
+      {(loading || abLoading) && (
+        <Card className="mb-6 border-violet-100">
+          <CardContent className="py-8">
+            <div className="space-y-4 animate-pulse">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-20 rounded-full bg-violet-100" />
+                <div className="h-5 w-16 rounded-full bg-violet-50" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-full rounded bg-violet-50" />
+                <div className="h-4 w-5/6 rounded bg-violet-50" />
+                <div className="h-4 w-4/6 rounded bg-violet-50" />
+              </div>
+              {generateImage && isPro && (
+                <div className="h-48 w-full rounded-xl bg-violet-50" />
+              )}
+              <div className="flex gap-2">
+                <div className="h-9 w-24 rounded bg-violet-50" />
+                <div className="h-9 w-32 rounded bg-violet-50" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* A/B Variations Results */}
       {abVariations.length > 0 && (
         <Card className="mb-6 border-violet-200 shadow-md">
@@ -471,6 +554,7 @@ export default function GeneratePage() {
                       onClick={() => {
                         navigator.clipboard.writeText(variation.content);
                         setCopiedId(variation.id);
+                        toast.success("Copied to clipboard!");
                         setTimeout(() => setCopiedId(null), 2000);
                       }}
                     >
@@ -576,13 +660,14 @@ export default function GeneratePage() {
                   userName={session?.user?.name || "You"}
                   userImage={session?.user?.image || undefined}
                 />
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
                     onClick={() => {
                       navigator.clipboard.writeText(result.content);
                       setCopiedId(result.id);
+                      toast.success("Copied to clipboard!");
                       setTimeout(() => setCopiedId(null), 2000);
                     }}
                   >
@@ -598,20 +683,56 @@ export default function GeneratePage() {
                     )}
                   </Button>
                   {result.imageUrl && (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+                        onClick={() =>
+                          handleDownload(result.imageUrl!, result.id)
+                        }
+                      >
+                        {downloadedId === result.id ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-green-500" /> Downloaded!
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-3.5 w-3.5" /> Download Image
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+                        onClick={() => handleRegenerateImage(result.id)}
+                        disabled={regeneratingId === result.id}
+                      >
+                        <RefreshCw
+                          className={`h-3.5 w-3.5 ${regeneratingId === result.id ? "animate-spin" : ""}`}
+                        />
+                        {regeneratingId === result.id
+                          ? "Regenerating..."
+                          : "Regenerate Image"}
+                      </Button>
+                    </>
+                  )}
+                  {/* Show "Add Image" button if no image and user is PRO */}
+                  {!result.imageUrl && isPro && (
                     <Button
                       variant="outline"
                       className="cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
-                      onClick={() =>
-                        handleDownload(result.imageUrl!, result.id)
-                      }
+                      onClick={() => handleRegenerateImage(result.id)}
+                      disabled={regeneratingId === result.id}
                     >
-                      {downloadedId === result.id ? (
+                      {regeneratingId === result.id ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-green-500" /> Downloaded!
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          Generating...
                         </>
                       ) : (
                         <>
-                          <Download className="h-3.5 w-3.5" /> Download Image
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          Generate Image
                         </>
                       )}
                     </Button>
