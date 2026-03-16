@@ -10,9 +10,44 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ThinkNPost — AI Social Media Content Generator",
+  title: {
+    default: "ThinkNPost — AI Social Media Content Generator",
+    template: "%s | ThinkNPost",
+  },
   description:
-    "Generate optimized social media posts for Twitter, LinkedIn, Instagram, and TikTok with AI.",
+    "Generate optimized social media posts for Twitter, LinkedIn, Instagram, and TikTok with AI. Powered by Google Gemini.",
+  keywords: [
+    "AI",
+    "social media",
+    "content generator",
+    "Twitter",
+    "LinkedIn",
+    "Instagram",
+    "TikTok",
+    "AI posts",
+    "content creation",
+  ],
+  authors: [{ name: "ThinkNPost" }],
+  metadataBase: new URL("https://micro-saas-sinem.vercel.app"),
+  openGraph: {
+    title: "ThinkNPost — AI Social Media Content Generator",
+    description:
+      "Generate optimized social media posts for Twitter, LinkedIn, Instagram, and TikTok in seconds with AI.",
+    url: "https://micro-saas-sinem.vercel.app",
+    siteName: "ThinkNPost",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ThinkNPost — AI Social Media Content Generator",
+    description:
+      "Generate optimized social media posts for Twitter, LinkedIn, Instagram, and TikTok in seconds with AI.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
