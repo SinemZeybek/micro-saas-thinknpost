@@ -5,7 +5,7 @@ import { GoogleGenAI } from "@google/genai";
  *
  * We use two models:
  * - gemini-2.5-flash → text generation (fast, cheap)
- * - gemini-2.5-flash-preview-image-generation → image generation (PRO only)
+ * - gemini-2.5-flash-image → image generation (PRO only)
  *
  * The @google/genai SDK is the new official SDK that supports
  * both text and image generation.
@@ -129,7 +129,7 @@ Aspect ratio: ${aspectRatio}`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-image-generation",
+      model: "gemini-2.5-flash-image",
       contents: [{ role: "user", parts: [{ text: imagePrompt }] }],
       config: {
         responseModalities: ["TEXT", "IMAGE"],

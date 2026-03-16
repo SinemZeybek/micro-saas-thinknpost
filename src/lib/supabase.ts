@@ -1,39 +1,32 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
 /**
- * Supabase Client for Storage
+ * Supabase Storage Client
  *
  * We use Supabase Storage to store AI-generated images.
- * The service role key gives us server-side write access
- * to upload images. The images are stored in a public bucket
- * so they can be displayed directly via URL.
+ * The service_role key gives us full access to upload files
+ * to the "post-images" bucket we created in the dashboard.
  *
- * We lazy-initialize the client so it doesn't crash during
- * Next.js build time when env vars aren't available yet.
- *
- * NEVER expose the service role key to the client!
+ * Flow:
+ * 1. Gemini generates an image → returns base64 data
+ * 2. We convert base64 to a Buffer
+ * 3. Upload that Buffer to Supabase Storage
+ * 4. Get the public URL back
+ * 5. Store the URL in the Post record
  */
 
-let supabase: SupabaseClient | null = null;
+import { createClient } from "@supabase/supabase-js";
 
-function getSupabase(): SupabaseClient {
-  if (!supabase) {
-    supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return supabase;
-}
+// Create a Supabase client with the service_role key
+// This key has full permissions — only use it on the server!
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const BUCKET = "post-images";
 
 /**
- * Upload an image to Supabase Storage and return the public URL.
- *
- * @param base64Data - The raw base64 image data (no data URI prefix)
- * @param mimeType - The MIME type (e.g., "image/png")
- * @param userId - The user's ID (used as folder name)
- * @param postId - The post's ID (used as filename)
- * @returns The public URL of the uploaded image, or null on failure
+ * Upload a base64 image to Supabase Storage.
+ * Returns the public URL of the uploaded image, or null if it fails.
  */
 export async function uploadPostImage(
   base64Data: string,
@@ -42,21 +35,21 @@ export async function uploadPostImage(
   postId: string
 ): Promise<string | null> {
   try {
-    const client = getSupabase();
-
-    // Convert base64 to a Buffer for upload
+    // Convert base64 string to a Buffer (binary data)
     const buffer = Buffer.from(base64Data, "base64");
 
-    // Determine file extension from MIME type
+    // Figure out the file extension from the MIME type
     const ext = mimeType.includes("png") ? "png" : "jpg";
+
+    // Create a unique path: userId/postId.png
     const filePath = `${userId}/${postId}.${ext}`;
 
-    // Upload to the "post-images" bucket
-    const { error } = await client.storage
-      .from("post-images")
+    // Upload to Supabase Storage
+    const { error } = await supabase.storage
+      .from(BUCKET)
       .upload(filePath, buffer, {
         contentType: mimeType,
-        upsert: true, // Overwrite if exists (for regeneration)
+        upsert: true, // Overwrite if exists
       });
 
     if (error) {
@@ -64,14 +57,12 @@ export async function uploadPostImage(
       return null;
     }
 
-    // Get the public URL
-    const { data } = client.storage
-      .from("post-images")
-      .getPublicUrl(filePath);
+    // Get the public URL for this file
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
     return data.publicUrl;
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error("Upload failed:", err);
     return null;
   }
 }

@@ -85,6 +85,10 @@ export default function GeneratePage() {
 
   const isPro = session?.user?.plan === "PRO";
 
+  // DEBUG — remove later
+  console.log("Session:", JSON.stringify(session?.user));
+  console.log("isPro:", isPro);
+
   // Auto-select orientation when platform changes
   useEffect(() => {
     if (platform && generateImage) {
