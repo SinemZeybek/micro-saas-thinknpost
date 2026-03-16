@@ -31,6 +31,7 @@ import {
   ImageIcon,
   Download,
   Lock,
+  FlaskConical,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { GenerateRequest, GenerateResponse } from "@/types";
@@ -81,13 +82,12 @@ export default function GeneratePage() {
   const [results, setResults] = useState<GenerateResponse[]>([]);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [downloadedId, setDownloadedId] = useState<string | null>(null);
+  const [abLoading, setAbLoading] = useState(false);
+  const [abVariations, setAbVariations] = useState<GenerateResponse[]>([]);
   const { data: session } = useSession();
 
   const isPro = session?.user?.plan === "PRO";
-
-  // DEBUG — remove later
-  console.log("Session:", JSON.stringify(session?.user));
-  console.log("isPro:", isPro);
 
   // Auto-select orientation when platform changes
   useEffect(() => {
@@ -146,13 +146,52 @@ export default function GeneratePage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
+      setDownloadedId(postId);
+      setTimeout(() => setDownloadedId(null), 2000);
     } catch {
       console.error("Download failed");
     }
   }
 
+  async function handleABGenerate() {
+    if (!platform || !tone || !length || !prompt.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setAbLoading(true);
+    setError("");
+    setAbVariations([]);
+
+    try {
+      const res = await fetch("/api/generate-ab", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform,
+          tone,
+          prompt: prompt.trim(),
+          length,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+
+      setAbVariations(data.variations);
+    } catch {
+      setError("Failed to generate A/B variations. Please try again.");
+    } finally {
+      setAbLoading(false);
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
+    <div className="mx-auto max-w-4xl px-6 py-10">
       <h1 className="mb-2 text-3xl font-bold text-gray-900">Generate Post</h1>
       <p className="mb-8 text-gray-400">
         Choose a platform, pick a tone, and let AI do the rest.
@@ -343,21 +382,126 @@ export default function GeneratePage() {
             </div>
           )}
 
-          <Button
-            className="w-full cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-md shadow-violet-200 transition-all hover:shadow-lg hover:shadow-violet-300"
-            size="lg"
-            onClick={handleGenerate}
-            disabled={loading}
-          >
-            <Sparkles className="h-4 w-4" />
-            {loading
-              ? generateImage && isPro
-                ? "Generating post + image..."
-                : "Generating..."
-              : "Generate Post"}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              className="flex-1 cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500 shadow-md shadow-violet-200 transition-all hover:shadow-lg hover:shadow-violet-300"
+              size="lg"
+              onClick={handleGenerate}
+              disabled={loading || abLoading}
+            >
+              <Sparkles className="h-4 w-4" />
+              {loading
+                ? generateImage && isPro
+                  ? "Generating post + image..."
+                  : "Generating..."
+                : "Generate Post"}
+            </Button>
+            {isPro ? (
+              <Button
+                variant="outline"
+                className="cursor-pointer gap-2 border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"
+                size="lg"
+                onClick={handleABGenerate}
+                disabled={loading || abLoading}
+              >
+                <FlaskConical className="h-4 w-4" />
+                {abLoading ? "Generating..." : "A/B Test"}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="cursor-pointer gap-2 border-violet-200 text-gray-400"
+                size="lg"
+                disabled
+              >
+                <FlaskConical className="h-4 w-4" />
+                A/B Test
+                <Lock className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* A/B Variations Results */}
+      {abVariations.length > 0 && (
+        <Card className="mb-6 border-violet-200 shadow-md">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-violet-500" />
+              <CardTitle className="text-gray-900">A/B Variations</CardTitle>
+              <Badge className="bg-violet-100 text-violet-700">
+                {abVariations.length} versions
+              </Badge>
+            </div>
+            <CardDescription>
+              Compare different versions and pick the one that resonates most.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {abVariations.map((variation, index) => (
+                <div
+                  key={variation.id}
+                  className="flex flex-col rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50/30 to-fuchsia-50/20 p-4"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <Badge
+                      variant="outline"
+                      className="border-violet-300 text-violet-600"
+                    >
+                      Version {String.fromCharCode(65 + index)}
+                    </Badge>
+                    <FavoriteButton
+                      postId={variation.id}
+                      initialFavorite={false}
+                    />
+                  </div>
+                  <PlatformMockup
+                    platform={variation.platform}
+                    content={variation.content}
+                    userName={session?.user?.name || "You"}
+                    userImage={session?.user?.image || undefined}
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 cursor-pointer gap-1 border-violet-200 text-xs hover:bg-violet-50"
+                      onClick={() => {
+                        navigator.clipboard.writeText(variation.content);
+                        setCopiedId(variation.id);
+                        setTimeout(() => setCopiedId(null), 2000);
+                      }}
+                    >
+                      {copiedId === variation.id ? (
+                        <>
+                          <Check className="h-3 w-3 text-green-500" /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" /> Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              className="mt-4 w-full cursor-pointer gap-2 border-violet-200 hover:bg-violet-50"
+              onClick={handleABGenerate}
+              disabled={abLoading}
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${abLoading ? "animate-spin" : ""}`}
+              />
+              {abLoading ? "Generating..." : "Generate New Variations"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Generated Results */}
       {results.length > 0 && (
@@ -461,7 +605,15 @@ export default function GeneratePage() {
                         handleDownload(result.imageUrl!, result.id)
                       }
                     >
-                      <Download className="h-3.5 w-3.5" /> Download Image
+                      {downloadedId === result.id ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-green-500" /> Downloaded!
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-3.5 w-3.5" /> Download Image
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>

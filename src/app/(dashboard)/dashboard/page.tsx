@@ -14,19 +14,25 @@ import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { PlatformMockup } from "@/components/shared/platform-mockups";
-import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
 const POSTS_PER_PAGE = 10;
 
+const PLATFORMS = ["TWITTER", "LINKEDIN", "INSTAGRAM", "TIKTOK"] as const;
+const TONES = ["PROFESSIONAL", "CASUAL", "HUMOROUS", "INSPIRATIONAL"] as const;
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; platform?: string; tone?: string; q?: string }>;
 }) {
   const session = await getSession();
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page || "1", 10));
+  const filterPlatform = params.platform || "";
+  const filterTone = params.tone || "";
+  const searchQuery = params.q || "";
 
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
@@ -34,20 +40,39 @@ export default async function DashboardPage({
 
   if (!user) return null;
 
-  // Get total post count for pagination
-  const totalPosts = await prisma.post.count({
-    where: { userId: user.id },
-  });
+  // Build filter conditions
+  const where: Record<string, unknown> = { userId: user.id };
+  if (filterPlatform) where.platform = filterPlatform;
+  if (filterTone) where.tone = filterTone;
+  if (searchQuery) {
+    where.OR = [
+      { content: { contains: searchQuery, mode: "insensitive" } },
+      { prompt: { contains: searchQuery, mode: "insensitive" } },
+    ];
+  }
 
-  // Get posts for current page
+  // Get total post count for pagination (with filters)
+  const totalPosts = await prisma.post.count({ where });
+
+  // Get posts for current page (with filters)
   const posts = await prisma.post.findMany({
-    where: { userId: user.id },
+    where,
     orderBy: { createdAt: "desc" },
     skip: (currentPage - 1) * POSTS_PER_PAGE,
     take: POSTS_PER_PAGE,
   });
 
   const totalPages = Math.max(1, Math.ceil(totalPosts / POSTS_PER_PAGE));
+
+  // Build query string for pagination that preserves filters
+  function buildPageUrl(page: number) {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    if (filterPlatform) params.set("platform", filterPlatform);
+    if (filterTone) params.set("tone", filterTone);
+    if (searchQuery) params.set("q", searchQuery);
+    return `/dashboard?${params.toString()}`;
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -133,10 +158,83 @@ export default async function DashboardPage({
         </Card>
       </div>
 
+      {/* Filters & Search */}
+      <div className="mb-6 rounded-xl border border-violet-100 bg-white p-4">
+        <form method="GET" action="/dashboard" className="space-y-3">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              name="q"
+              placeholder="Search posts..."
+              defaultValue={searchQuery}
+              className="w-full rounded-lg border border-violet-200 py-2 pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-300"
+            />
+          </div>
+
+          {/* Platform & Tone Filters */}
+          <div className="flex flex-wrap gap-2">
+            <select
+              name="platform"
+              defaultValue={filterPlatform}
+              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+            >
+              <option value="">All Platforms</option>
+              {PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p.charAt(0) + p.slice(1).toLowerCase()}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="tone"
+              defaultValue={filterTone}
+              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+            >
+              <option value="">All Tones</option>
+              {TONES.map((t) => (
+                <option key={t} value={t}>
+                  {t.charAt(0) + t.slice(1).toLowerCase()}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="submit"
+              size="sm"
+              className="cursor-pointer gap-1 bg-violet-600 hover:bg-violet-700"
+            >
+              <Search className="h-3.5 w-3.5" />
+              Filter
+            </Button>
+
+            {(filterPlatform || filterTone || searchQuery) && (
+              <Link href="/dashboard">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer border-violet-200 text-violet-600 hover:bg-violet-50"
+                >
+                  Clear
+                </Button>
+              </Link>
+            )}
+          </div>
+        </form>
+      </div>
+
       {/* Recent Posts */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
-          Recent Posts
+          {filterPlatform || filterTone || searchQuery ? "Filtered Posts" : "Recent Posts"}
+          {totalPosts > 0 && (
+            <span className="ml-2 text-sm font-normal text-gray-400">
+              ({totalPosts} {totalPosts === 1 ? "post" : "posts"})
+            </span>
+          )}
         </h2>
         {totalPages > 1 && (
           <span className="text-sm text-gray-400">
@@ -220,7 +318,7 @@ export default async function DashboardPage({
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-2">
               {currentPage > 1 ? (
-                <Link href={`/dashboard?page=${currentPage - 1}`}>
+                <Link href={buildPageUrl(currentPage - 1)}>
                   <Button
                     variant="outline"
                     size="sm"
@@ -247,7 +345,7 @@ export default async function DashboardPage({
               </span>
 
               {currentPage < totalPages ? (
-                <Link href={`/dashboard?page=${currentPage + 1}`}>
+                <Link href={buildPageUrl(currentPage + 1)}>
                   <Button
                     variant="outline"
                     size="sm"

@@ -87,6 +87,57 @@ Rules:
   return (result.text ?? "").trim();
 }
 
+// ─── A/B VARIATIONS (PRO ONLY) ─────────────────────────────────
+
+/**
+ * Generate 3 different versions of the same post for A/B testing.
+ * Each version has a different angle/approach while keeping the same topic.
+ */
+export async function generateABVariations({
+  platform,
+  tone,
+  prompt,
+  length,
+}: GeneratePostParams): Promise<string[]> {
+  const systemPrompt = `You are a social media content expert. Generate exactly 3 DIFFERENT versions of a post about the same topic.
+Each version should take a different angle or approach while staying on-topic.
+
+Platform: ${platform}
+${PLATFORM_GUIDELINES[platform]}
+
+Tone: ${tone}
+${TONE_GUIDELINES[tone]}
+
+Length: ${length}
+${LENGTH_GUIDELINES[length]}
+
+Rules:
+- Output EXACTLY 3 versions separated by "---"
+- Each version should be unique in style, hook, or angle
+- No quotes around the text
+- No "Version 1:" or "Here's a post:" prefixes
+- No numbering
+- Make each feel authentic, not AI-generated
+- Separate each version with exactly "---" on its own line`;
+
+  const result = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      { role: "user", parts: [{ text: systemPrompt + `\n\nTopic: ${prompt}` }] },
+    ],
+  });
+
+  const text = (result.text ?? "").trim();
+  const versions = text.split(/\n---\n/).map((v) => v.trim()).filter(Boolean);
+
+  // If splitting didn't work well, return the whole thing as one version
+  if (versions.length < 2) {
+    return [text];
+  }
+
+  return versions.slice(0, 3);
+}
+
 // ─── IMAGE GENERATION (PRO ONLY) ───────────────────────────────
 
 // Map our orientation enum to Gemini's aspect ratio format
