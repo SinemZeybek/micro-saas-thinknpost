@@ -14,7 +14,7 @@ import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { PlatformMockup } from "@/components/shared/platform-mockups";
-import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight, Search, BarChart3, Heart } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
 const POSTS_PER_PAGE = 10;
@@ -63,6 +63,30 @@ export default async function DashboardPage({
   });
 
   const totalPages = Math.max(1, Math.ceil(totalPosts / POSTS_PER_PAGE));
+
+  // Analytics: group posts by platform and tone
+  const [platformStats, toneStats, favoriteCount] = await Promise.all([
+    prisma.post.groupBy({
+      by: ["platform"],
+      where: { userId: user.id },
+      _count: { platform: true },
+      orderBy: { _count: { platform: "desc" } },
+    }),
+    prisma.post.groupBy({
+      by: ["tone"],
+      where: { userId: user.id },
+      _count: { tone: true },
+      orderBy: { _count: { tone: "desc" } },
+    }),
+    prisma.post.count({
+      where: { userId: user.id, isFavorite: true },
+    }),
+  ]);
+
+  // Get total posts count (unfiltered) for analytics
+  const totalPostsAll = filterPlatform || filterTone || searchQuery
+    ? await prisma.post.count({ where: { userId: user.id } })
+    : totalPosts;
 
   // Build query string for pagination that preserves filters
   function buildPageUrl(page: number) {
@@ -157,6 +181,123 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics */}
+      {totalPostsAll > 0 && (
+        <div className="mb-10">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <BarChart3 className="h-5 w-5 text-violet-500" />
+            Analytics
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Platform Breakdown */}
+            <Card className="border-violet-100">
+              <CardHeader className="pb-3">
+                <CardDescription className="text-violet-500 font-medium">
+                  Posts by Platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {platformStats.map((stat) => {
+                  const percentage = Math.round(
+                    (stat._count.platform / totalPostsAll) * 100
+                  );
+                  const colors: Record<string, string> = {
+                    TWITTER: "bg-sky-400",
+                    LINKEDIN: "bg-blue-500",
+                    INSTAGRAM: "bg-pink-400",
+                    TIKTOK: "bg-gray-800",
+                  };
+                  return (
+                    <div key={stat.platform} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">
+                          {stat.platform.charAt(0) + stat.platform.slice(1).toLowerCase()}
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {stat._count.platform}{" "}
+                          <span className="text-gray-400">({percentage}%)</span>
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className={`h-full rounded-full transition-all ${colors[stat.platform] || "bg-violet-400"}`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Tone Breakdown */}
+            <Card className="border-violet-100">
+              <CardHeader className="pb-3">
+                <CardDescription className="text-violet-500 font-medium">
+                  Posts by Tone
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {toneStats.map((stat) => {
+                  const percentage = Math.round(
+                    (stat._count.tone / totalPostsAll) * 100
+                  );
+                  const colors: Record<string, string> = {
+                    PROFESSIONAL: "bg-violet-500",
+                    CASUAL: "bg-teal-400",
+                    HUMOROUS: "bg-amber-400",
+                    INSPIRATIONAL: "bg-rose-400",
+                  };
+                  return (
+                    <div key={stat.tone} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">
+                          {stat.tone.charAt(0) + stat.tone.slice(1).toLowerCase()}
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {stat._count.tone}{" "}
+                          <span className="text-gray-400">({percentage}%)</span>
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className={`h-full rounded-full transition-all ${colors[stat.tone] || "bg-violet-400"}`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Stats Row */}
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <Card className="border-rose-100 bg-gradient-to-br from-rose-50 to-white">
+              <CardContent className="flex items-center gap-3 py-4">
+                <Heart className="h-5 w-5 text-rose-400" />
+                <div>
+                  <p className="text-2xl font-bold text-rose-600">{favoriteCount}</p>
+                  <p className="text-xs text-rose-400">Favorited Posts</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-violet-100 bg-gradient-to-br from-violet-50 to-white">
+              <CardContent className="flex items-center gap-3 py-4">
+                <BarChart3 className="h-5 w-5 text-violet-400" />
+                <div>
+                  <p className="text-2xl font-bold text-violet-600">
+                    {platformStats.length > 0 ? platformStats[0].platform.charAt(0) + platformStats[0].platform.slice(1).toLowerCase() : "—"}
+                  </p>
+                  <p className="text-xs text-violet-400">Most Used Platform</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Filters & Search */}
       <div className="mb-6 rounded-xl border border-violet-100 bg-white p-4">
