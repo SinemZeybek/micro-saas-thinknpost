@@ -256,15 +256,15 @@ export default function GeneratePage() {
       {/* The Form */}
       <Card className="mb-6 border-violet-100">
         <CardHeader>
-          <CardTitle className="text-gray-900">Create Content</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl font-bold text-gray-900">Create Content</CardTitle>
+          <CardDescription className="text-sm text-gray-500">
             Describe your topic and we&apos;ll generate a ready-to-post caption.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="platform" className="text-gray-600">
+              <Label htmlFor="platform" className="text-sm font-semibold text-gray-800">
                 Platform
               </Label>
               <Select
@@ -294,7 +294,7 @@ export default function GeneratePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tone" className="text-gray-600">
+              <Label htmlFor="tone" className="text-sm font-semibold text-gray-800">
                 Tone
               </Label>
               <Select
@@ -324,7 +324,7 @@ export default function GeneratePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="length" className="text-gray-600">
+              <Label htmlFor="length" className="text-sm font-semibold text-gray-800">
                 Length
               </Label>
               <Select
@@ -355,7 +355,7 @@ export default function GeneratePage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="prompt" className="text-gray-600">
+            <Label htmlFor="prompt" className="text-sm font-semibold text-gray-800">
               What do you want to post about?
             </Label>
             <Textarea
