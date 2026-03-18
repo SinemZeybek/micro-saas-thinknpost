@@ -41,8 +41,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="mb-2 text-3xl font-bold text-gray-900">Settings</h1>
-      <p className="mb-8 text-gray-400">
+      <h1 className="mb-2 text-4xl font-bold text-gray-900">Settings</h1>
+      <p className="mb-8 text-lg text-gray-400">
         Your account information and subscription details.
       </p>
 

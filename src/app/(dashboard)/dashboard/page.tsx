@@ -113,10 +113,10 @@ export default async function DashboardPage({
       {/* Header */}
       <div className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold text-gray-900">
             Welcome back, {user.name?.split(" ")[0] || "there"}!
           </h1>
-          <p className="mt-1 text-gray-400">
+          <p className="mt-1 text-lg text-gray-400">
             Here&apos;s your content overview
           </p>
         </div>

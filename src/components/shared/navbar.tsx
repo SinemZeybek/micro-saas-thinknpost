@@ -21,21 +21,20 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/generate">
-          <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold text-transparent">
+          <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-2xl font-bold text-transparent">
             ThinkNPost
           </span>
         </Link>
 
         {/* Navigation Links */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link key={item.href} href={item.href}>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className={`cursor-pointer gap-2 ${
+                  className={`cursor-pointer gap-2 text-sm ${
                     isActive
                       ? "bg-violet-100 text-violet-700 hover:bg-violet-100"
                       : "text-gray-500 hover:bg-violet-50 hover:text-violet-600"
@@ -53,8 +52,7 @@ export function Navbar() {
           {/* Sign Out */}
           <Button
             variant="ghost"
-            size="sm"
-            className="cursor-pointer gap-2 text-gray-400 hover:bg-rose-50 hover:text-rose-500"
+            className="cursor-pointer gap-2 text-sm text-gray-400 hover:bg-rose-50 hover:text-rose-500"
             onClick={() => signOut({ callbackUrl: "/" })}
           >
             <LogOut className="h-4 w-4" />

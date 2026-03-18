@@ -34,8 +34,8 @@ export default async function FavoritesPage() {
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Favorites</h1>
-          <p className="mt-1 text-gray-400">
+          <h1 className="text-4xl font-bold text-gray-900">Favorites</h1>
+          <p className="mt-1 text-lg text-gray-400">
             Your saved posts ({favorites.length})
           </p>
         </div>
