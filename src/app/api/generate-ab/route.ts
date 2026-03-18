@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { generateABVariations } from "@/lib/gemini";
+import {
+  generateABVariations,
+  generatePostImage,
+  PLATFORM_DEFAULT_ORIENTATION,
+} from "@/lib/gemini";
+import { uploadPostImage } from "@/lib/supabase";
 import type { GenerateRequest } from "@/types";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
@@ -13,7 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body: GenerateRequest = await req.json();
-  const { platform, tone, prompt, length } = body;
+  const { platform, tone, prompt, length, generateImage, orientation } = body;
 
   if (!platform || !tone || !prompt || !length) {
     return NextResponse.json(
@@ -60,12 +65,44 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Generate 3 variations
+    // Generate 3 text variations
     const variations = await generateABVariations({ platform, tone, prompt, length });
+
+    // Determine orientation
+    const finalOrientation =
+      orientation || PLATFORM_DEFAULT_ORIENTATION[platform] || "SQUARE";
+
+    // Generate images for each variation if requested
+    const imageUrls: (string | null)[] = [];
+    if (generateImage) {
+      for (const content of variations) {
+        try {
+          const imageResult = await generatePostImage({
+            postContent: content,
+            platform,
+            orientation: finalOrientation,
+          });
+          if (imageResult) {
+            const tempId = crypto.randomUUID();
+            const url = await uploadPostImage(
+              imageResult.data,
+              imageResult.mimeType,
+              user.id,
+              tempId
+            );
+            imageUrls.push(url);
+          } else {
+            imageUrls.push(null);
+          }
+        } catch {
+          imageUrls.push(null);
+        }
+      }
+    }
 
     // Save all variations to the database
     const posts = await prisma.$transaction(
-      variations.map((content) =>
+      variations.map((content, i) =>
         prisma.post.create({
           data: {
             userId: user.id,
@@ -74,6 +111,10 @@ export async function POST(req: NextRequest) {
             prompt,
             content,
             length,
+            imageUrl: imageUrls[i] ?? null,
+            orientation: generateImage
+              ? (finalOrientation as "PORTRAIT" | "LANDSCAPE" | "SQUARE")
+              : undefined,
           },
         })
       )
@@ -97,6 +138,8 @@ export async function POST(req: NextRequest) {
         tone: post.tone,
         prompt: post.prompt,
         createdAt: post.createdAt.toISOString(),
+        imageUrl: post.imageUrl,
+        orientation: post.orientation,
       })),
     });
   } catch (err) {

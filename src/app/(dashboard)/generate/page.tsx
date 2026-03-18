@@ -208,6 +208,8 @@ export default function GeneratePage() {
           tone,
           prompt: prompt.trim(),
           length,
+          generateImage,
+          orientation,
         }),
       });
 
@@ -227,7 +229,7 @@ export default function GeneratePage() {
     } finally {
       setAbLoading(false);
     }
-  }, [platform, tone, length, prompt]);
+  }, [platform, tone, length, prompt, generateImage, orientation]);
 
   // Keyboard shortcut: Cmd+Enter or Ctrl+Enter to generate
   useEffect(() => {
@@ -540,13 +542,30 @@ export default function GeneratePage() {
                       initialFavorite={false}
                     />
                   </div>
+                  {variation.imageUrl && (
+                    <div className="mb-3 overflow-hidden rounded-lg border border-violet-100">
+                      <img
+                        src={variation.imageUrl}
+                        alt="AI generated visual"
+                        className="w-full object-cover"
+                        style={{
+                          aspectRatio:
+                            variation.orientation === "PORTRAIT"
+                              ? "9/16"
+                              : variation.orientation === "LANDSCAPE"
+                                ? "16/9"
+                                : "1/1",
+                        }}
+                      />
+                    </div>
+                  )}
                   <PlatformMockup
                     platform={variation.platform}
                     content={variation.content}
                     userName={session?.user?.name || "You"}
                     userImage={session?.user?.image || undefined}
                   />
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -568,6 +587,26 @@ export default function GeneratePage() {
                         </>
                       )}
                     </Button>
+                    {variation.imageUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 cursor-pointer gap-1 border-violet-200 text-xs hover:bg-violet-50"
+                        onClick={() =>
+                          handleDownload(variation.imageUrl!, variation.id)
+                        }
+                      >
+                        {downloadedId === variation.id ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-500" /> Downloaded!
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-3 w-3" /> Download
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
