@@ -27,7 +27,7 @@ const TONES = ["PROFESSIONAL", "CASUAL", "HUMOROUS", "INSPIRATIONAL"] as const;
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; platform?: string; tone?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; platform?: string; tone?: string; q?: string; from?: string; to?: string }>;
 }) {
   const session = await getSession();
   const params = await searchParams;
@@ -35,6 +35,8 @@ export default async function DashboardPage({
   const filterPlatform = params.platform || "";
   const filterTone = params.tone || "";
   const searchQuery = params.q || "";
+  const dateFrom = params.from || "";
+  const dateTo = params.to || "";
 
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
@@ -51,6 +53,15 @@ export default async function DashboardPage({
       { content: { contains: searchQuery, mode: "insensitive" } },
       { prompt: { contains: searchQuery, mode: "insensitive" } },
     ];
+  }
+  if (dateFrom || dateTo) {
+    where.createdAt = {};
+    if (dateFrom) (where.createdAt as Record<string, unknown>).gte = new Date(dateFrom);
+    if (dateTo) {
+      const endDate = new Date(dateTo);
+      endDate.setHours(23, 59, 59, 999);
+      (where.createdAt as Record<string, unknown>).lte = endDate;
+    }
   }
 
   // Get total post count for pagination (with filters)
@@ -86,7 +97,7 @@ export default async function DashboardPage({
   ]);
 
   // Get total posts count (unfiltered) for analytics
-  const totalPostsAll = filterPlatform || filterTone || searchQuery
+  const totalPostsAll = filterPlatform || filterTone || searchQuery || dateFrom || dateTo
     ? await prisma.post.count({ where: { userId: user.id } })
     : totalPosts;
 
@@ -97,6 +108,8 @@ export default async function DashboardPage({
     if (filterPlatform) params.set("platform", filterPlatform);
     if (filterTone) params.set("tone", filterTone);
     if (searchQuery) params.set("q", searchQuery);
+    if (dateFrom) params.set("from", dateFrom);
+    if (dateTo) params.set("to", dateTo);
     return `/dashboard?${params.toString()}`;
   }
 
@@ -347,6 +360,21 @@ export default async function DashboardPage({
               ))}
             </select>
 
+            <input
+              type="date"
+              name="from"
+              defaultValue={dateFrom}
+              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+              placeholder="From"
+            />
+            <input
+              type="date"
+              name="to"
+              defaultValue={dateTo}
+              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+              placeholder="To"
+            />
+
             <Button
               type="submit"
               size="sm"
@@ -356,7 +384,7 @@ export default async function DashboardPage({
               Filter
             </Button>
 
-            {(filterPlatform || filterTone || searchQuery) && (
+            {(filterPlatform || filterTone || searchQuery || dateFrom || dateTo) && (
               <Link href="/dashboard">
                 <Button
                   type="button"
@@ -375,7 +403,7 @@ export default async function DashboardPage({
       {/* Recent Posts */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
-          {filterPlatform || filterTone || searchQuery ? "Filtered Posts" : "Recent Posts"}
+          {filterPlatform || filterTone || searchQuery || dateFrom || dateTo ? "Filtered Posts" : "Recent Posts"}
           {totalPosts > 0 && (
             <span className="ml-2 text-sm font-normal text-gray-400">
               ({totalPosts} {totalPosts === 1 ? "post" : "posts"})
@@ -390,9 +418,35 @@ export default async function DashboardPage({
       </div>
       {posts.length === 0 && currentPage === 1 ? (
         <Card className="border-dashed border-violet-200">
-          <CardContent className="py-12 text-center text-gray-400">
-            No posts yet. Click &quot;Generate Post&quot; to create your first
-            one!
+          <CardContent className="py-16 text-center">
+            {filterPlatform || filterTone || searchQuery || dateFrom || dateTo ? (
+              <>
+                <Search className="mx-auto mb-3 h-10 w-10 text-violet-300" />
+                <p className="text-gray-500 font-medium mb-1">No posts match your filters</p>
+                <p className="text-sm text-gray-400">
+                  Try adjusting your search or filters
+                </p>
+                <Link href="/dashboard" className="mt-4 inline-block">
+                  <Button variant="outline" size="sm" className="cursor-pointer border-violet-200 text-violet-600">
+                    Clear Filters
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Sparkles className="mx-auto mb-3 h-10 w-10 text-violet-300" />
+                <p className="text-gray-500 font-medium mb-1">No posts yet</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  Generate your first AI-powered social media post!
+                </p>
+                <Link href="/generate">
+                  <Button className="cursor-pointer gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-500" size="sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Generate Your First Post
+                  </Button>
+                </Link>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
