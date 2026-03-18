@@ -23,7 +23,7 @@ export async function POST() {
 
   try {
     // Cancel the subscription on Polar
-    await polar.subscriptions.cancel({ id: user.polarSubscriptionId });
+    await polar.subscriptions.revoke({ id: user.polarSubscriptionId });
 
     return NextResponse.json({ success: true });
   } catch (error) {
