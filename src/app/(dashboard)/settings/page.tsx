@@ -10,7 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UpgradeButton } from "@/components/shared/upgrade-button";
-import { User, Mail, Crown, Calendar, FileText, Sparkles } from "lucide-react";
+import { CancelSubscriptionButton } from "@/components/shared/cancel-subscription-button";
+import { User, Mail, Crown, Calendar, FileText, Sparkles, Clock } from "lucide-react";
 
 const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
 
@@ -38,6 +39,12 @@ export default async function SettingsPage() {
   const todayUsage =
     today.getTime() === lastUsage.getTime() ? user.dailyUsage : 0;
   const limit = DAILY_LIMITS[user.plan];
+
+  // Calculate days remaining on subscription
+  const subscriptionEndsAt = user.subscriptionEndsAt;
+  const daysRemaining = subscriptionEndsAt
+    ? Math.max(0, Math.ceil((subscriptionEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
@@ -115,6 +122,33 @@ export default async function SettingsPage() {
             </div>
           </div>
 
+          {/* Subscription period info for PRO users */}
+          {user.plan === "PRO" && subscriptionEndsAt && (
+            <>
+              <Separator className="bg-violet-100/60" />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-gray-500">
+                    <Clock className="h-3.5 w-3.5 text-amber-400" />
+                    Current Period Ends
+                  </span>
+                  <span className="font-medium text-gray-700">
+                    {subscriptionEndsAt.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                {daysRemaining !== null && (
+                  <p className="text-xs text-gray-400 ml-5">
+                    {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} remaining in this billing period
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
           <Separator className="bg-violet-100/60" />
 
           <div className="space-y-3">
@@ -152,6 +186,16 @@ export default async function SettingsPage() {
               <span className="font-medium text-gray-700">{totalFavorites}</span>
             </div>
           </div>
+
+          {/* Cancel subscription for PRO users */}
+          {user.plan === "PRO" && user.polarSubscriptionId && (
+            <>
+              <Separator className="bg-violet-100/60" />
+              <div className="pt-1">
+                <CancelSubscriptionButton />
+              </div>
+            </>
+          )}
 
           {user.plan === "FREE" && (
             <>
