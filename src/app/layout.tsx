@@ -29,12 +29,12 @@ export const metadata: Metadata = {
     "content creation",
   ],
   authors: [{ name: "ThinkNPost" }],
-  metadataBase: new URL("https://micro-saas-sinem.vercel.app"),
+  metadataBase: new URL("https://thinknpost.vercel.app"),
   openGraph: {
     title: "ThinkNPost — AI Social Media Content Generator",
     description:
       "Generate optimized social media posts for Twitter, LinkedIn, Instagram, and TikTok in seconds with AI.",
-    url: "https://micro-saas-sinem.vercel.app",
+    url: "https://thinknpost.vercel.app",
     siteName: "ThinkNPost",
     locale: "en_US",
     type: "website",
