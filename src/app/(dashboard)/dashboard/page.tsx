@@ -360,20 +360,24 @@ export default async function DashboardPage({
               ))}
             </select>
 
-            <input
-              type="date"
-              name="from"
-              defaultValue={dateFrom}
-              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
-              placeholder="From"
-            />
-            <input
-              type="date"
-              name="to"
-              defaultValue={dateTo}
-              className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
-              placeholder="To"
-            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-gray-500">From</span>
+              <input
+                type="date"
+                name="from"
+                defaultValue={dateFrom}
+                className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-gray-500">To</span>
+              <input
+                type="date"
+                name="to"
+                defaultValue={dateTo}
+                className="cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-sm text-gray-600 focus:border-violet-400 focus:outline-none"
+              />
+            </div>
 
             <Button
               type="submit"
