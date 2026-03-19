@@ -16,8 +16,8 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-violet-50/50 via-white to-fuchsia-50/30">
       {/* Header */}
       <header className="border-b border-violet-100/60 bg-white/70 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-2xl font-bold text-transparent">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl sm:text-2xl font-bold text-transparent">
             ThinkNPost
           </span>
           <div className="flex items-center gap-3">
@@ -38,7 +38,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="flex flex-1 flex-col items-center px-6">
+      <main className="flex flex-1 flex-col items-center px-4 sm:px-6">
         <section className="flex flex-col items-center justify-center py-20 text-center">
           {/* Badge */}
           <div className="mb-6 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-sm font-medium text-violet-700">

@@ -247,8 +247,8 @@ export default function GeneratePage() {
   }, [handleGenerate, loading, abLoading]);
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="mb-2 text-4xl font-bold text-gray-900">Generate Post</h1>
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-10">
+      <h1 className="mb-2 text-2xl sm:text-4xl font-bold text-gray-900">Generate Post</h1>
       <p className="mb-8 text-lg text-gray-400">
         Choose a platform, pick a tone, and let AI do the rest.
       </p>
@@ -262,7 +262,7 @@ export default function GeneratePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="platform" className="text-sm font-semibold text-gray-800">
                 Platform
@@ -524,7 +524,7 @@ export default function GeneratePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               {abVariations.map((variation, index) => (
                 <div
                   key={variation.id}

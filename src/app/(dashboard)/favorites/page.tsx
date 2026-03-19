@@ -31,10 +31,10 @@ export default async function FavoritesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-10">
       <div className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Favorites</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Favorites</h1>
           <p className="mt-1 text-lg text-gray-400">
             Your saved posts ({favorites.length})
           </p>

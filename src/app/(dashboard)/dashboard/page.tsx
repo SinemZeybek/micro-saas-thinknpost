@@ -122,11 +122,11 @@ export default async function DashboardPage({
   const limit = DAILY_LIMITS[user.plan];
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-10">
       {/* Header */}
-      <div className="mb-10 flex items-center justify-between">
+      <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">
             Welcome back, {user.name?.split(" ")[0] || "there"}!
           </h1>
           <p className="mt-1 text-lg text-gray-400">
@@ -145,7 +145,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Stats */}
-      <div className="mb-10 grid grid-cols-3 gap-4">
+      <div className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-violet-100 bg-gradient-to-br from-violet-50 to-white">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2 text-violet-500">
@@ -292,7 +292,7 @@ export default async function DashboardPage({
           </div>
 
           {/* Quick Stats Row */}
-          <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="border-rose-100 bg-gradient-to-br from-rose-50 to-white">
               <CardContent className="flex items-center gap-3 py-4">
                 <Heart className="h-5 w-5 text-rose-400" />
