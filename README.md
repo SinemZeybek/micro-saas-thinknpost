@@ -2,7 +2,7 @@
 
 AI-powered social media content generator. Create optimized posts for Twitter, LinkedIn, Instagram, and TikTok with AI-generated text and images.
 
-**Live:** [micro-saas-sinem.vercel.app](https://micro-saas-sinem.vercel.app)
+**Live:** [thinknpost.vercel.app](https://thinknpost.vercel.app)
 
 ## Features
 
