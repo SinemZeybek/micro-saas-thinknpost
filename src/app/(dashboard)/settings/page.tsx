@@ -13,7 +13,7 @@ import { UpgradeButton } from "@/components/shared/upgrade-button";
 import { CancelSubscriptionButton } from "@/components/shared/cancel-subscription-button";
 import { User, Mail, Crown, Calendar, FileText, Sparkles, Clock } from "lucide-react";
 
-const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
+const DAILY_LIMITS = { FREE: 5, PRO: 200 } as const;
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -205,7 +205,7 @@ export default async function SettingsPage() {
                   Upgrade to PRO
                 </p>
                 <p className="text-xs text-violet-500">
-                  Get 50 posts per day instead of 5. Generate more content and grow faster.
+                  Get 200 posts/day, 5 knowledge sources, 100 saved ideas, and more. Generate more content and grow faster.
                 </p>
                 <div className="mt-3">
                   <UpgradeButton />

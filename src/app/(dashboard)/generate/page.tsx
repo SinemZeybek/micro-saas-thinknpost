@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +34,7 @@ import {
   Download,
   Lock,
   FlaskConical,
+  Lightbulb,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -76,7 +79,8 @@ export default function GeneratePage() {
   );
   const [tone, setTone] = useState<GenerateRequest["tone"] | "">("");
   const [length, setLength] = useState<GenerateRequest["length"] | "">("");
-  const [prompt, setPrompt] = useState("");
+  const searchParams = useSearchParams();
+  const [prompt, setPrompt] = useState(searchParams.get("idea") || "");
   const [generateImage, setGenerateImage] = useState(false);
   const [orientation, setOrientation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -265,7 +269,7 @@ export default function GeneratePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="platform" className="text-sm font-semibold text-gray-800">
-                Platform
+                Platform <span className="text-rose-400">*</span>
               </Label>
               <Select
                 value={platform}
@@ -295,7 +299,7 @@ export default function GeneratePage() {
 
             <div className="space-y-2">
               <Label htmlFor="tone" className="text-sm font-semibold text-gray-800">
-                Tone
+                Tone <span className="text-rose-400">*</span>
               </Label>
               <Select
                 value={tone}
@@ -325,7 +329,7 @@ export default function GeneratePage() {
 
             <div className="space-y-2">
               <Label htmlFor="length" className="text-sm font-semibold text-gray-800">
-                Length
+                Length <span className="text-rose-400">*</span>
               </Label>
               <Select
                 value={length}
@@ -356,7 +360,7 @@ export default function GeneratePage() {
 
           <div className="space-y-2">
             <Label htmlFor="prompt" className="text-sm font-semibold text-gray-800">
-              What do you want to post about?
+              What do you want to post about? <span className="text-rose-400">*</span>
             </Label>
             <Textarea
               id="prompt"
@@ -366,9 +370,15 @@ export default function GeneratePage() {
               rows={3}
               className="border-violet-200 focus:ring-violet-300"
             />
-            <p className="text-xs text-gray-400">
-              Press <kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Ctrl</kbd>+<kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Enter</kbd> to generate
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="hidden sm:block text-xs text-gray-400">
+                Press <kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Ctrl</kbd>+<kbd className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-mono">Enter</kbd> to generate
+              </p>
+              <Link href="/knowledge" className="flex items-center gap-1.5 text-sm font-medium text-violet-500 hover:text-violet-700 transition-colors whitespace-nowrap">
+                <Lightbulb className="h-4 w-4 shrink-0" />
+                Need ideas? Try ThinkBank
+              </Link>
+            </div>
           </div>
 
           {/* Image Generation Toggle — PRO Only */}
@@ -411,20 +421,36 @@ export default function GeneratePage() {
                   Image Orientation
                 </Label>
                 <div className="grid grid-cols-3 gap-2">
-                  {ORIENTATIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => setOrientation(o.value)}
-                      className={`cursor-pointer rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
-                        orientation === o.value
-                          ? "border-violet-400 bg-violet-100 text-violet-700"
-                          : "border-violet-200 bg-white text-gray-600 hover:bg-violet-50"
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
+                  {ORIENTATIONS.map((o) => {
+                    const shapes: Record<string, { w: string; h: string }> = {
+                      PORTRAIT: { w: "w-3", h: "h-4" },
+                      LANDSCAPE: { w: "w-5", h: "h-3" },
+                      SQUARE: { w: "w-3.5", h: "h-3.5" },
+                    };
+                    const shape = shapes[o.value];
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setOrientation(o.value)}
+                        className={`cursor-pointer rounded-lg border px-3 py-2.5 text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
+                          orientation === o.value
+                            ? "border-violet-400 bg-violet-100 text-violet-700"
+                            : "border-violet-200 bg-white text-gray-600 hover:bg-violet-50"
+                        }`}
+                      >
+                        <div
+                          className={`${shape.w} ${shape.h} border-2 ${
+                            orientation === o.value
+                              ? "border-violet-500"
+                              : "border-gray-400"
+                          }`}
+                          style={{ borderRadius: "1px" }}
+                        />
+                        {o.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

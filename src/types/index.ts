@@ -26,3 +26,42 @@ export interface UsageInfo {
   limit: number;
   plan: "FREE" | "PRO";
 }
+
+// Knowledge source returned from the API
+export interface KnowledgeSourceResponse {
+  id: string;
+  name: string;
+  type: "PDF" | "TEXT" | "URL";
+  createdAt: string;
+  sizeBytes: number | null;
+  sourceUrl: string | null;
+}
+
+// Calendar day within a week
+export interface CalendarDayResponse {
+  id: string;
+  dayOfWeek: number;
+  title: string;
+  summary: string;
+  platform: string;
+  suggestedTime: string;
+}
+
+// Calendar week returned from the API
+export interface CalendarWeekResponse {
+  id: string;
+  startDate: string;
+  sourceNames: string;
+  createdAt: string;
+  days: CalendarDayResponse[];
+}
+
+// Content idea returned from the API
+export interface ContentIdeaResponse {
+  id: string;
+  title: string;
+  summary: string;
+  platform: string | null;
+  sourceNames: string;
+  createdAt: string;
+}

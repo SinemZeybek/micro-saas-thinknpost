@@ -65,9 +65,12 @@ model User {
   polarSubscriptionId  String?   @unique  // Links to Polar.sh subscription
   subscriptionEndsAt   DateTime?           // When current billing period ends
 
-  posts    Post[]
-  accounts Account[]
-  sessions Session[]
+  posts            Post[]
+  accounts         Account[]
+  sessions         Session[]
+  knowledgeSources KnowledgeSource[]
+  contentIdeas     ContentIdea[]
+  calendarWeeks    CalendarWeek[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -85,6 +88,33 @@ model Post {
   imageUrl    String?
   orientation Orientation @default(SQUARE)
   isFavorite  Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model KnowledgeSource {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      KnowledgeSourceType
+  name      String
+  rawText   String              @db.Text
+  fileUrl   String?
+  sourceUrl String?
+  sizeBytes Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContentIdea {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String  @db.Text
+  platform    String?
+  sourceNames String  @default("") // Comma-separated source names used for generation
 
   createdAt DateTime @default(now())
 }
@@ -115,6 +145,36 @@ enum Tone {
   CASUAL
   HUMOROUS
   INSPIRATIONAL
+}
+
+model CalendarWeek {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  sourceNames String        @default("")
+  days        CalendarDay[]
+
+  createdAt DateTime @default(now())
+}
+
+model CalendarDay {
+  id             String       @id @default(cuid())
+  calendarWeekId String
+  calendarWeek   CalendarWeek @relation(fields: [calendarWeekId], references: [id], onDelete: Cascade)
+  dayOfWeek      Int          // 0 = Monday, 6 = Sunday
+  title          String
+  summary        String       @db.Text
+  platform       String
+  suggestedTime  String       // e.g. "09:00", "18:30"
+
+  createdAt DateTime @default(now())
+}
+
+enum KnowledgeSourceType {
+  PDF
+  TEXT
+  URL
 }
 
 enum Orientation {

@@ -10,7 +10,7 @@ import { uploadPostImage } from "@/lib/supabase";
 import type { GenerateRequest } from "@/types";
 
 // FREE users get 5 posts/day, PRO users get 50
-const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
+const DAILY_LIMITS = { FREE: 5, PRO: 200 } as const;
 
 export async function POST(req: NextRequest) {
   // 1. Check if user is logged in

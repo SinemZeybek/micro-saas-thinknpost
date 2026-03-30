@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, Sparkles, Heart, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Sparkles, Heart, Settings, LogOut, Menu, X, BookOpen, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/generate", label: "Generate", icon: Sparkles },
+  { href: "/knowledge", label: "ThinkBank", icon: BookOpen },
+  { href: "/calendar", label: "PostCalendar", icon: CalendarDays },
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/settings", label: "Settings", icon: Settings },

@@ -18,7 +18,7 @@ import { PlatformMockup } from "@/components/shared/platform-mockups";
 import { ExportCSVButton } from "@/components/shared/export-csv-button";
 import { Sparkles, FileText, Crown, ChevronLeft, ChevronRight, Search, BarChart3, Heart } from "lucide-react";
 
-const DAILY_LIMITS = { FREE: 5, PRO: 50 } as const;
+const DAILY_LIMITS = { FREE: 5, PRO: 200 } as const;
 const POSTS_PER_PAGE = 10;
 
 const PLATFORMS = ["TWITTER", "LINKEDIN", "INSTAGRAM", "TIKTOK"] as const;
