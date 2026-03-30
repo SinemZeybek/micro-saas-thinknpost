@@ -160,9 +160,11 @@ export default function Home() {
                   "5 posts per day",
                   "All 4 platforms",
                   "4 tone options",
-                  "Save favorites",
-                  "Post history",
-                  "Copy & export posts",
+                  "2 knowledge sources (ThinkBank)",
+                  "30 content ideas saved",
+                  "1 weekly calendar (PostCalendar)",
+                  "10MB file uploads",
+                  "Save favorites & export posts",
                 ].map((feature) => (
                   <li key={feature} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="h-4 w-4 text-teal-500 flex-shrink-0" />
@@ -199,12 +201,15 @@ export default function Home() {
               </p>
               <ul className="mt-8 space-y-3">
                 {[
-                  "50 posts per day",
+                  "200 posts per day",
+                  "5 knowledge sources (ThinkBank)",
+                  "100 content ideas saved",
+                  "4 weekly calendars (PostCalendar)",
+                  "40MB file uploads",
                   "AI image generation",
                   "A/B test variations (3 versions)",
                   "Image regeneration",
                   "All Free features included",
-                  "Priority support",
                 ].map((feature) => (
                   <li key={feature} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
