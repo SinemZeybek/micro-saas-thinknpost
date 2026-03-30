@@ -251,7 +251,7 @@ export default function GeneratePage() {
   }, [handleGenerate, loading, abLoading]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10">
       <h1 className="mb-2 text-2xl sm:text-4xl font-bold text-gray-900">Generate Post</h1>
       <p className="mb-8 text-lg text-gray-400">
         Choose a platform, pick a tone, and let AI do the rest.
