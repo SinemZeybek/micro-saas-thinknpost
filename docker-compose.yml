@@ -72,9 +72,10 @@ services:
     restart: unless-stopped
 
     ports:
-      - "6379:6379"
-      # Default Redis port. You can connect with Redis CLI or
-      # a GUI tool to inspect what's stored.
+      - "6380:6379"
+      # Maps host port 6380 → container port 6379.
+      # Using 6380 in case Redis is already running locally on 6379.
+      # Inside Docker, the app still connects to redis:6379.
 
     volumes:
       - redis_data:/data

@@ -13,14 +13,23 @@
  * 5. Store the URL in the Post record
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// Create a Supabase client with the service_role key
-// This key has full permissions — only use it on the server!
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialized Supabase client.
+// We don't create it at module level because during Docker builds
+// the env vars aren't available yet. Instead, we create it on
+// first use (at runtime, when env vars are set).
+let _supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 const BUCKET = "post-images";
 
@@ -45,6 +54,7 @@ export async function uploadPostImage(
     const filePath = `${userId}/${postId}.${ext}`;
 
     // Upload to Supabase Storage
+    const supabase = getSupabase();
     const { error } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, buffer, {
@@ -58,7 +68,7 @@ export async function uploadPostImage(
     }
 
     // Get the public URL for this file
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
+    const { data } = getSupabase().storage.from(BUCKET).getPublicUrl(filePath);
 
     return data.publicUrl;
   } catch (err) {

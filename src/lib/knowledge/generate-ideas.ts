@@ -1,8 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+let _ai: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
+  if (!_ai) _ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  return _ai;
+}
 
 export interface ContentIdeaResult {
   title: string;
@@ -29,7 +31,7 @@ ${context}
 Respond with a JSON array of objects with keys: title, summary, platform.
 Return ONLY the JSON array, no markdown formatting or code blocks.`;
 
-  const result = await ai.models.generateContent({
+  const result = await getAI().models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
   });

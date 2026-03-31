@@ -1,8 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+let _ai: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
+  if (!_ai) _ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  return _ai;
+}
 
 const DAY_NAMES = [
   "Sunday",
@@ -41,7 +43,7 @@ ${context}
 Respond with a JSON array of 7 objects with keys: dayOfWeek (0 = Day 1/today, 1 = Day 2, ..., 6 = Day 7), title, summary, platform (set to ""), suggestedTime.
 Return ONLY the JSON array, no markdown formatting or code blocks.`;
 
-  const result = await ai.models.generateContent({
+  const result = await getAI().models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts: [{ text: prompt }] }],
   });

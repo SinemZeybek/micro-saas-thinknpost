@@ -1,9 +1,16 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialized — only created when actually uploading a file
+let _supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 const BUCKET = "knowledge-files";
 
@@ -17,6 +24,7 @@ export async function uploadKnowledgeFile(
     const ext = mimeType.includes("pdf") ? "pdf" : "txt";
     const filePath = `${userId}/${fileId}.${ext}`;
 
+    const supabase = getSupabase();
     const { error } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, buffer, {
@@ -29,7 +37,7 @@ export async function uploadKnowledgeFile(
       return null;
     }
 
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
+    const { data } = getSupabase().storage.from(BUCKET).getPublicUrl(filePath);
     return data.publicUrl;
   } catch (err) {
     console.error("Knowledge file upload failed:", err);

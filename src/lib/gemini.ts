@@ -11,9 +11,17 @@ import { GoogleGenAI } from "@google/genai";
  * both text and image generation.
  */
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+// Lazy-initialized Gemini client.
+// Created on first use instead of at import time, so Docker builds
+// don't fail when GEMINI_API_KEY isn't set yet.
+let _ai: GoogleGenAI | null = null;
+
+function getAI(): GoogleGenAI {
+  if (!_ai) {
+    _ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  }
+  return _ai;
+}
 
 // Platform-specific rules so the AI writes appropriate content
 const PLATFORM_GUIDELINES: Record<string, string> = {
@@ -77,7 +85,7 @@ Rules:
 - No "Here's a post:" prefix
 - Make it feel authentic, not AI-generated`;
 
-  const result = await ai.models.generateContent({
+  const result = await getAI().models.generateContent({
     model: "gemini-2.5-flash",
     contents: [
       { role: "user", parts: [{ text: systemPrompt + `\n\nTopic: ${prompt}` }] },
@@ -120,7 +128,7 @@ Rules:
 - Make each feel authentic, not AI-generated
 - Separate each version with exactly "---" on its own line`;
 
-  const result = await ai.models.generateContent({
+  const result = await getAI().models.generateContent({
     model: "gemini-2.5-flash",
     contents: [
       { role: "user", parts: [{ text: systemPrompt + `\n\nTopic: ${prompt}` }] },
@@ -179,7 +187,7 @@ No text on the image. High quality, suitable for social media.
 Aspect ratio: ${aspectRatio}`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-2.5-flash-image",
       contents: [{ role: "user", parts: [{ text: imagePrompt }] }],
       config: {

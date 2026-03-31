@@ -68,6 +68,12 @@ ENV NODE_ENV=production
 # - We DON'T run "prisma db push" here because there's no
 #   database available during the build phase.
 #   Database sync happens at container startup (entrypoint).
+#
+# Prisma needs DATABASE_URL and DIRECT_URL to exist at build time
+# (just to generate the client, not to actually connect).
+# We provide dummy values that get overridden at runtime.
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npm run build:docker
 
 
@@ -87,23 +93,29 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy only what we need to run (not source code, not devDependencies):
 
-# 1. Public assets (favicon, images, etc.)
+# 1. Install Prisma CLI + deps for db push at startup.
+#    Done FIRST so it doesn't conflict with copied modules.
+COPY --from=builder /app/package.json ./package.json
+RUN npm install prisma dotenv --no-save 2>/dev/null
+
+# 2. Public assets (favicon, images, etc.)
 COPY --from=builder /app/public ./public
 
-# 2. Next.js standalone output + static files
+# 3. Next.js standalone output + static files
 #    Next.js "standalone" mode creates a minimal server
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# 3. Prisma client (needed at runtime for database queries)
+# 4. Prisma client (needed at runtime for database queries)
+#    This overwrites the @prisma from npm install with the build-generated one
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# 4. Prisma schema + migration files (needed for db push at startup)
+# 5. Prisma schema + config (needed for db push at startup)
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
-# 5. Startup script
+# 6. Startup script
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
