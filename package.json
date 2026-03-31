@@ -6,6 +6,7 @@
     "dev": "next dev",
     "postinstall": "prisma generate",
     "build": "prisma generate && prisma db push --skip-generate && next build",
+    "build:docker": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

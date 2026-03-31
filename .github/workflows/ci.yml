@@ -1,0 +1,110 @@
+# ============================================
+# CI/CD Pipeline — Runs on every push & pull request
+# ============================================
+# CI = Continuous Integration
+#   → Automatically test/lint your code when you push
+#   → Catches bugs BEFORE they reach production
+#
+# CD = Continuous Deployment (handled by Vercel for now)
+#   → Automatically deploy when tests pass
+#
+# This file tells GitHub: "Every time someone pushes code
+# or opens a PR, spin up a virtual machine and run these steps."
+# ============================================
+
+name: CI
+
+# When should this run?
+on:
+  push:
+    branches: [main]
+    # Run on every push to the main branch
+  pull_request:
+    branches: [main]
+    # Run on every PR targeting main
+
+# What jobs to run?
+jobs:
+  # ── Job 1: Lint & Type Check ─────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    # "runs-on" = what machine to use
+    # ubuntu-latest = a free Linux VM provided by GitHub
+
+    steps:
+      # Step 1: Download your code onto the VM
+      - name: Checkout code
+        uses: actions/checkout@v4
+        # "uses" = use a pre-built action (like a plugin)
+        # actions/checkout = clones your repo
+
+      # Step 2: Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          # "cache: npm" = cache node_modules between runs
+          # so npm install is faster on subsequent runs
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm ci
+        # Same clean install as in Docker
+
+      # Step 4: Run the linter
+      - name: Lint
+        run: npm run lint
+        # Checks for code style issues, unused imports, etc.
+
+      # Step 5: Type check
+      - name: Type Check
+        run: npx tsc --noEmit
+        # Checks all TypeScript types WITHOUT building
+        # --noEmit = don't create output files, just check
+
+  # ── Job 2: Run Tests ─────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        # Runs your 58 Vitest tests
+
+  # ── Job 3: Docker Build Test ─────────────
+  # This doesn't deploy anything — it just verifies
+  # that the Docker image builds successfully.
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    # Only run on pushes to main (not on every PR)
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg SKIP_DB_PUSH=true \
+            -t micro-saas-sinem:test \
+            .
+        # Builds the image to make sure the Dockerfile works.
+        # We tag it "micro-saas-sinem:test" (just a name).
+        # This catches issues like missing files, broken builds, etc.

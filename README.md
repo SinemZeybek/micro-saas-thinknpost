@@ -59,7 +59,10 @@ AI-powered social media content generator. Create optimized posts for Twitter, L
 | File Storage   | Supabase Storage                  |
 | Payments       | Polar.sh                          |
 | Testing        | Vitest (58 tests)                 |
-| Deployment     | Vercel                            |
+| Containerization | Docker + Docker Compose          |
+| Cache/Queue    | Redis 7                           |
+| CI/CD          | GitHub Actions                    |
+| Deployment     | Vercel (prod), Docker (local)     |
 
 ## Architecture
 
@@ -223,6 +226,40 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
    Open [http://localhost:3000](http://localhost:3000)
 
+### Docker Setup (Alternative)
+
+Run the entire stack (app + PostgreSQL + Redis) in containers:
+
+1. **Install [Docker Desktop](https://docker.com/products/docker-desktop)**
+
+2. **Create your Docker env file**
+   ```bash
+   cp .env.docker.example .env.docker
+   ```
+   Fill in your API keys (Google OAuth, Gemini, Polar, Supabase Storage).
+
+3. **Start everything**
+   ```bash
+   docker-compose up --build
+   ```
+   This will:
+   - Start a PostgreSQL 16 database (no Supabase needed for DB)
+   - Start a Redis 7 cache
+   - Build and start the Next.js app
+   - Auto-run `prisma db push` to create tables
+
+4. **Open [http://localhost:3000](http://localhost:3000)**
+
+Useful commands:
+```bash
+docker-compose up -d          # Run in background (detached)
+docker-compose down           # Stop everything
+docker-compose down -v        # Stop & wipe all data (volumes)
+docker-compose up --build     # Rebuild after code changes
+docker-compose logs app       # View app logs
+docker-compose logs db        # View database logs
+```
+
 ### Supabase Storage Setup
 
 1. Go to your Supabase dashboard → Storage
@@ -236,6 +273,16 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 npm test          # Run all 58 tests
 npm run test:watch # Watch mode
 ```
+
+## CI/CD
+
+GitHub Actions runs automatically on every push to `main` and on pull requests:
+
+- **Lint & Type Check** — ESLint + TypeScript compiler
+- **Tests** — All 58 Vitest tests
+- **Docker Build** — Verifies the Docker image builds successfully (push to main only)
+
+See `.github/workflows/ci.yml` for the pipeline configuration.
 
 ## Database Schema
 

@@ -1,0 +1,142 @@
+# ============================================
+# docker-compose.yml — Orchestrates your containers
+# ============================================
+# Docker Compose lets you define MULTIPLE containers
+# (called "services") that work together.
+#
+# Think of it like this:
+#   - Your app needs a database to work
+#   - Instead of installing PostgreSQL on your computer,
+#     Docker runs it in a container alongside your app
+#   - They talk to each other over a private network
+#
+# Run everything with:  docker-compose up
+# Stop everything with: docker-compose down
+# Rebuild after changes: docker-compose up --build
+# ============================================
+
+services:
+  # ── PostgreSQL Database ──────────────────
+  # This replaces Supabase for local development.
+  # It's a full PostgreSQL database running in a container.
+  db:
+    image: postgres:16-alpine
+    # "image" = use this pre-built image from Docker Hub
+    # postgres:16 = PostgreSQL version 16
+    # -alpine = tiny Linux variant (keeps it small)
+
+    restart: unless-stopped
+    # If the container crashes, Docker restarts it automatically.
+    # "unless-stopped" = restart always, except if you manually stop it.
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: microsaas
+      # These create the database user and database on first run.
+      # For local dev, simple passwords are fine.
+      # In production, you'd use strong passwords via secrets.
+
+    ports:
+      - "5432:5432"
+      # Maps port 5432 on your computer → port 5432 in the container.
+      # This lets you connect from tools like pgAdmin or DBeaver
+      # to localhost:5432 to inspect your database.
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # "volumes" persist data between container restarts.
+      # Without this, your database would be WIPED every time
+      # you restart the container. The volume saves it to disk.
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      # Docker checks if PostgreSQL is actually ready to accept
+      # connections. The app container waits for this before starting.
+
+  # ── Redis (Cache & Queues) ───────────────
+  # Redis is an in-memory data store. It's SUPER fast because
+  # it keeps everything in RAM instead of on disk.
+  #
+  # Common uses:
+  #   - Caching: Store API responses so you don't re-compute them
+  #   - Rate limiting: Track "user X made 5 requests today"
+  #   - Session storage: Keep user sessions in a shared place
+  #   - Queues: "Process this task in the background"
+  redis:
+    image: redis:7-alpine
+
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+      # Default Redis port. You can connect with Redis CLI or
+      # a GUI tool to inspect what's stored.
+
+    volumes:
+      - redis_data:/data
+      # Redis can persist data to disk periodically.
+      # This means cached data survives container restarts.
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Your Next.js App ─────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # "build" tells Docker to build an image using our Dockerfile
+      # instead of pulling a pre-built one.
+      # "context: ." means the Dockerfile can access all files
+      # in the current directory.
+
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+      # Your app will be at http://localhost:3000
+
+    environment:
+      # Database URL pointing to the "db" container.
+      # Inside Docker, containers find each other by service name.
+      # So "db" resolves to the PostgreSQL container's IP address.
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/microsaas
+      DIRECT_URL: postgresql://postgres:postgres@db:5432/microsaas
+
+      # Redis URL pointing to the "redis" container
+      REDIS_URL: redis://redis:6379
+
+      # These come from your .env file (see env_file below)
+      NEXTAUTH_URL: http://localhost:3000
+
+    env_file:
+      - .env.docker
+      # Loads additional env vars from .env.docker file.
+      # This is where you put secrets (API keys, OAuth credentials)
+      # that shouldn't be hardcoded in this file.
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # "depends_on" with health checks means:
+      # Don't start the app until PostgreSQL AND Redis are
+      # fully ready to accept connections. Without this,
+      # the app might crash because it tries to connect
+      # to a database that hasn't started yet.
+
+# ── Named Volumes ────────────────────────
+# These are like virtual hard drives that Docker manages.
+# Data stored here persists even if you delete the containers.
+# To truly wipe everything: docker-compose down -v (the -v flag)
+volumes:
+  postgres_data:
+  redis_data:

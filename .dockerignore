@@ -1,0 +1,42 @@
+# ============================================
+# .dockerignore — Files Docker should skip
+# ============================================
+# When Docker builds your image, it sends all files in
+# the current directory to the Docker engine (called "context").
+# This file excludes things we don't need, making builds faster.
+# ============================================
+
+# Dependencies — we install fresh inside the container
+node_modules
+
+# Build output — we build fresh inside the container
+.next
+
+# Git history — not needed to run the app
+.git
+.gitignore
+
+# Environment files — secrets are passed via docker-compose
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+
+# Documentation
+README.md
+LICENSE
+
+# Tests — not needed in production image
+test
+src/__tests__
+vitest.config.ts
+coverage
+
+# Docker files themselves (no recursion!)
+Dockerfile
+docker-compose.yml
