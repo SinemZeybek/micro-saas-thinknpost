@@ -37,6 +37,9 @@ src/__tests__
 vitest.config.ts
 coverage
 
+# Admin scripts — not needed in production
+scripts
+
 # Docker files themselves (no recursion!)
 Dockerfile
 docker-compose.yml
