@@ -2,7 +2,7 @@
 
 AI-powered social media content generator. Create optimized posts for Twitter, LinkedIn, Instagram, and TikTok with AI-generated text and images. Upload your product knowledge, generate content ideas, and plan your week with a visual content calendar.
 
-**Live:** [thinknpost.vercel.app](https://thinknpost.vercel.app)
+**Live:** [thinknpost.vercel.app](https://thinknpost.vercel.app) · **Railway:** [bountiful-passion-production-e1ed.up.railway.app](https://bountiful-passion-production-e1ed.up.railway.app)
 
 ## Features
 
@@ -62,7 +62,7 @@ AI-powered social media content generator. Create optimized posts for Twitter, L
 | Containerization | Docker + Docker Compose          |
 | Cache/Queue    | Redis 7                           |
 | CI/CD          | GitHub Actions                    |
-| Deployment     | Vercel (prod), Docker (local)     |
+| Deployment     | Vercel · Railway · Docker         |
 
 ## Architecture
 
@@ -260,6 +260,47 @@ docker-compose logs app       # View app logs
 docker-compose logs db        # View database logs
 ```
 
+### Railway Setup (Alternative)
+
+Deploy to [Railway](https://railway.com) with PostgreSQL + Redis — all in one platform:
+
+1. **Install Railway CLI**
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+
+2. **Create project and add services**
+   ```bash
+   railway init --name thinknpost
+   ```
+   Then in the Railway dashboard, click **+ New → Database → PostgreSQL** and **+ New → Database → Redis**.
+
+3. **Link and configure the app service**
+   ```bash
+   railway service <your-service-name>
+   railway variables set \
+     DATABASE_URL="<from Postgres service>" \
+     DIRECT_URL="<from Postgres service>" \
+     REDIS_URL="<from Redis service>" \
+     NEXTAUTH_URL="https://<your-domain>.up.railway.app" \
+     NEXTAUTH_SECRET="your-secret" \
+     GOOGLE_CLIENT_ID="your-id" \
+     GOOGLE_CLIENT_SECRET="your-secret" \
+     GEMINI_API_KEY="your-key"
+   ```
+
+4. **Deploy**
+   ```bash
+   railway up
+   ```
+   Railway builds from the Dockerfile and auto-runs `prisma db push` at startup.
+
+5. **Generate a public URL**
+   ```bash
+   railway domain
+   ```
+
 ### Supabase Storage Setup
 
 1. Go to your Supabase dashboard → Storage
@@ -283,6 +324,14 @@ GitHub Actions runs automatically on every push to `main` and on pull requests:
 - **Docker Build** — Verifies the Docker image builds successfully (push to main only)
 
 See `.github/workflows/ci.yml` for the pipeline configuration.
+
+## Deployment
+
+| Platform | What | Database | Redis | URL |
+| -------- | ---- | -------- | ----- | --- |
+| **Vercel** | App only | Supabase (external) | - | [thinknpost.vercel.app](https://thinknpost.vercel.app) |
+| **Railway** | App + DB + Redis | Railway PostgreSQL | Railway Redis | [bountiful-passion-production-e1ed.up.railway.app](https://bountiful-passion-production-e1ed.up.railway.app) |
+| **Docker** | Local dev | Container (port 5432) | Container (port 6380) | localhost:3000 |
 
 ## Database Schema
 
