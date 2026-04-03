@@ -57,27 +57,24 @@ export default async function FavoritesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           {favorites.map((post) => (
             <Card
               key={post.id}
               className="border-violet-100/60 transition-colors hover:border-violet-200"
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <Badge
                     variant="outline"
-                    className="border-violet-200 text-violet-600"
+                    className="border-violet-200 text-violet-600 text-xs"
                   >
                     {post.platform}
                   </Badge>
-                  <Badge className="bg-violet-50 text-violet-600 hover:bg-violet-100">
+                  <Badge className="bg-violet-50 text-violet-600 hover:bg-violet-100 text-xs">
                     {post.tone}
                   </Badge>
-                  <span className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-gray-400">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </span>
+                  <span className="ml-auto flex items-center gap-1">
                     <CopyButton text={post.content} />
                     <EditButton postId={post.id} initialContent={post.content} />
                     <FavoriteButton
@@ -88,25 +85,16 @@ export default async function FavoritesPage() {
                   </span>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="mb-2 text-xs text-gray-400">
-                  Prompt: {post.prompt}
+              <CardContent className="px-4 pb-3 pt-0">
+                <p className="text-xs text-gray-400 mb-2 truncate">
+                  {post.prompt}
                 </p>
                 {post.imageUrl && (
-                  <div className="mb-3 overflow-hidden rounded-xl border border-violet-100">
+                  <div className="mb-2 overflow-hidden rounded-lg border border-violet-100">
                     <img
                       src={post.imageUrl}
                       alt="AI generated visual"
-                      className="w-full object-cover"
-                      style={{
-                        aspectRatio:
-                          post.orientation === "PORTRAIT"
-                            ? "9/16"
-                            : post.orientation === "LANDSCAPE"
-                              ? "16/9"
-                              : "1/1",
-                        maxHeight: post.orientation === "PORTRAIT" ? "300px" : undefined,
-                      }}
+                      className="w-full object-cover max-h-36"
                     />
                   </div>
                 )}
@@ -115,7 +103,11 @@ export default async function FavoritesPage() {
                   content={post.content}
                   userName={user?.name || "You"}
                   userImage={user?.image || undefined}
+                  compact
                 />
+                <p className="text-xs text-gray-300 mt-2">
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </p>
               </CardContent>
             </Card>
           ))}
